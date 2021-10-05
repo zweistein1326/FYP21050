@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "http": "*",
     "moment": "^2.29.1",
     "sha256": "^0.2.0",
     "uuid": "^8.3.2"

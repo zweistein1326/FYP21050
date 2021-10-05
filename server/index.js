@@ -56,6 +56,7 @@ class Block {
     addTransaction(transaction) {
         this.transactions = this.transactions.concat([transaction]);
     }
+
 }
 
 // class Nodes {
@@ -94,6 +95,7 @@ class Node {
     }
 
     finAttribute() { }
+    
 }
 
 class Attribute {
@@ -103,6 +105,18 @@ class Attribute {
         this.title = title
         this.value = value;
         this.attribute_id = hash([this.parent_id, this.generator_id, this.title, this.value])
+    }
+
+    changeValue(newValue, modifier_id) {
+        if (modifier_id === this.generator_id) {
+            this.value = newValue;
+        }
+        else if (modifier_id === this.parent_id) {
+            //send a request for confirmation to generator
+        }
+        else {
+            return
+        }
     }
 }
 

@@ -7,8 +7,8 @@ const ipfs = ipfsClient.create({
     protocol: "http"
 });
 const formidable = require('formidable');
-
 const auth = require('../components/auth');
+
 
 router.get('/', async (req, res, next) => {
     return res.json("Hello World");
@@ -44,6 +44,7 @@ router.post('/upload', async (req, res, next) => {
                 path: filePath,
                 hash: fileHash
             }
+            auth.users[0].uploadedFiles.push(fileHash);
             return res.json(fileObj);
         })
     }
@@ -61,26 +62,37 @@ const addFile = async (fileName, filePath) => {
     return fileHash;
 }
 
+router.get('/file/:hash', async (req, res, next) => {
+    const { hash } = req.params;
+    console.log(hash);
+    const result = await getData(hash);
+    // console.log(result);
+    return res.json(result);
+})
+
 const getData = async (hash) => {
     const asyncitr = ipfs.cat(hash);
-    // const asyncitrWithHashValues = ipfs.get(hash);
-    for await (const itr of asyncitr) {
-        let data = Buffer.from(itr).toString();
-        console.log(data);
-    }
+    let data = [];
+    let count = 0;
+    const file = fs.createWriteStream(__dirname + '/img/' + 'me.png');
 
+    for await (const itr of asyncitr) {
+        file.write(Buffer.from(itr));
+    }
+    file.end();
+    // console.log(data);
+    return data;
 }
 
-
 router.post('/login', async (req, res, next) => {
-    auth.authenticate(req.body)
-        .then(user=>{
-            if(user){
+    auth.login(req.body)
+        .then(user => {
+            if (user) {
                 return res.json(user)
             }
-            return res.status(400).json({message: 'Username or password incorrect'});
+            return res.status(400).json({ message: 'Username or password incorrect' });
         })
-        .catch(e=>{
+        .catch(e => {
             return next(e)
         })
 })

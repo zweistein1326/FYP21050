@@ -7,7 +7,7 @@ contract CredentialHash{
         ipfsHash = x;
     }
 
-    function getHash( string memory y ) public view returns (string memory x){
+    function getHash() public view returns (string memory x){
         return ipfsHash;
     }
 }

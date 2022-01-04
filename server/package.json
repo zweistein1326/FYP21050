@@ -1,8 +1,23 @@
 {
   "dependencies": {
+    "dotenv": "^10.0.0",
+    "express": "^4.17.2",
     "http": "*",
     "moment": "^2.29.1",
+    "nodemon": "^2.0.15",
     "sha256": "^0.2.0",
-    "uuid": "^8.3.2"
-  }
+    "uuid": "^8.3.2",
+    "web3": "^1.6.1"
+  },
+  "name": "server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "start:dev": "nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
 }

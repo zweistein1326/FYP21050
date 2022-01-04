@@ -17,6 +17,7 @@ router.get('/', async (req, res, next) => {
 router.post('/upload', async (req, res, next) => {
     // upload file to IPFS
     // get hash of uploaded file
+    // txt, pdf file
     // return returned hash
 
     let fileObj = {};
@@ -62,10 +63,10 @@ const addFile = async (fileName, filePath) => {
     return fileHash;
 }
 
-router.get('/file/:hash', async (req, res, next) => {
-    const { hash } = req.params;
-    console.log(hash);
-    const result = await getData(hash);
+router.get('/file/:cid', async (req, res, next) => {
+    const { cid } = req.params;
+    console.log(cid);
+    const result = await getData(cid);
     // console.log(result);
     return res.json(result);
 })
@@ -74,14 +75,17 @@ const getData = async (hash) => {
     const asyncitr = ipfs.cat(hash);
     let data = [];
     let count = 0;
-    const file = fs.createWriteStream(__dirname + '/img/' + 'me.png');
+    writeDataToFile(asyncitr);
+    // console.log(data);
+    return data;
+}
 
+const writeDataToFile = async (asyncitr) => {
+    const file = fs.createWriteStream(__dirname + '/img/' + 'me.doc'); // __dirname + '/img' + filename
     for await (const itr of asyncitr) {
         file.write(Buffer.from(itr));
     }
     file.end();
-    // console.log(data);
-    return data;
 }
 
 router.post('/login', async (req, res, next) => {

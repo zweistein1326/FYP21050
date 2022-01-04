@@ -8,6 +8,7 @@ const ipfs = ipfsClient.create({
 });
 const formidable = require('formidable');
 const auth = require('../components/auth');
+const { addFileToUser } = require('../../database');
 
 router.get('/', async (req, res, next) => {
     return res.json("Hello World");
@@ -40,7 +41,7 @@ router.post('/upload', async (req, res, next) => {
                 path: filePath,
                 hash: fileHash
             }
-            auth.users[0].uploadedFiles.push(fileHash);
+            addFileToUser('1', fileObj)
             return res.json(fileObj);
         })
     }
@@ -52,9 +53,7 @@ const addFile = async (fileName, filePath) => {
     const filesAdded = await ipfs.add({ path: fileName, content: file }, {
         progress: (len) => console.log("Uploading file...", len)
     });
-    console.log(filesAdded);
     const fileHash = filesAdded.cid;
-    console.log(fileHash);
     return fileHash;
 }
 
@@ -76,7 +75,7 @@ const getData = async (hash) => {
 }
 
 const getFilePath = async () => {
-    
+
 }
 
 const writeDataToFile = async (asyncitr) => {

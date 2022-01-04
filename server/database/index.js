@@ -64,6 +64,27 @@ function getAllUsers() {
     return users;
 }
 
+async function addFileToUser(userId, file) {
+    const user = await getUserById(userId);
+    if (!!user.uploadedFiles) {
+        uploadedFiles = [...user.uploadedFiles, file.hash.toString()];
+    } else {
+        console.log(file.hash.toString());
+        uploadedFiles = [file.hash.toString()];
+        console.log(uploadedFiles);
+    }
+    try {
+        set(
+            ref(db, `users/${user.id}/uploadedFiles/`),
+            uploadedFiles
+        );
+        return true;
+    } catch (err) {
+        console.log(err);
+        throw Error(err.message);
+    }
+}
+
 
 module.exports = {
     getAllUsers,
@@ -71,5 +92,6 @@ module.exports = {
     getUserById,
     writeUserData,
     updateUserData,
+    addFileToUser,
     db
 };

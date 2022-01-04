@@ -9,19 +9,14 @@ const ipfs = ipfsClient.create({
 const formidable = require('formidable');
 const auth = require('../components/auth');
 
-
 router.get('/', async (req, res, next) => {
     return res.json("Hello World");
 })
 
 router.post('/upload', async (req, res, next) => {
-    // upload file to IPFS
-    // get hash of uploaded file
-    // txt, pdf file
-    // return returned hash
+    // upload any kind of files
 
     let fileObj = {};
-    console.log(req.files);
     if (req.files.inputFile) {
         const file = req.files.inputFile;
         const fileName = file.name;
@@ -68,25 +63,33 @@ router.get('/file/:cid', async (req, res, next) => {
     console.log(cid);
     const result = await getData(cid);
     // console.log(result);
-    return res.json(result);
+    return res.json({ file: result });
 })
 
 const getData = async (hash) => {
     const asyncitr = ipfs.cat(hash);
     let data = [];
     let count = 0;
-    writeDataToFile(asyncitr);
+    const file = writeDataToFile(asyncitr);
     // console.log(data);
-    return data;
+    return file;
+}
+
+const getFilePath = async () => {
+    
 }
 
 const writeDataToFile = async (asyncitr) => {
+    getFilePath();
     const file = fs.createWriteStream(__dirname + '/img/' + 'me.doc'); // __dirname + '/img' + filename
     for await (const itr of asyncitr) {
         file.write(Buffer.from(itr));
     }
     file.end();
+    return file;
 }
+
+
 
 router.post('/login', async (req, res, next) => {
     auth.login(req.body)

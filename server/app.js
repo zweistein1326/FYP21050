@@ -1,11 +1,15 @@
 const express = require('express');
 const app = express();
+const bodyParser = require('body-parser');
+const fileUpload = require('express-fileupload');
 
 const hostname = '127.0.0.1';
 const port = process.env.PORT || 8000;
 
 
+app.use(fileUpload());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
     res.header('Access-Control_Allow-Headers', "x-access token, Origin, Content-Type, Accept");

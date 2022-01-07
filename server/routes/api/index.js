@@ -91,8 +91,10 @@ const writeDataToFile = async (asyncitr) => {
 
 
 router.post('/login', async (req, res, next) => {
+    console.log('login');
     auth.login(req.body)
         .then(user => {
+            console.log(user);
             if (user) {
                 return res.json(user)
             }

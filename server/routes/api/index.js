@@ -9,6 +9,19 @@ const ipfs = ipfsClient.create({
 const formidable = require('formidable');
 const auth = require('../components/auth');
 const { addFileToUser } = require('../../database');
+const Web3 = require('web3');
+const contract = require('../../../blockchain/build/contracts/CredentialHash.json');
+
+const setDefaultAccount = async () => {
+    var account = await web3.eth.getAccounts();
+    web3.eth.defaultAccount = account[0];
+}
+
+var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545'));
+setDefaultAccount();
+var deployedContract = new web3.eth.Contract(contract.abi, contract.networks[5777].address);
+
+
 
 router.get('/', async (req, res, next) => {
     return res.json("Hello World");
@@ -16,6 +29,7 @@ router.get('/', async (req, res, next) => {
 
 router.post('/upload', async (req, res, next) => {
     // upload any kind of files
+    // add file hash to ethereum
 
     let fileObj = {};
     if (req.files.inputFile) {
@@ -41,7 +55,14 @@ router.post('/upload', async (req, res, next) => {
                 path: filePath,
                 hash: fileHash
             }
-            addFileToUser('1', fileObj)
+            
+            const data = web3.eth.accounts.sign(fileHash.toString(), '6f49451d42e90662ee96cd7848f775203ad8358f0453dcc91451a5f7f9ccedd3');
+            
+            const recoveredData = web3.eth.accounts.recover(data.message, data.signature);
+            deployedContract.methods.saveHash(fileHash.toString()).send({ from: web3.eth.defaultAccount }).on('receipt', () => {
+                console.log('received');
+            });
+            // addFileToUser('10', fileObj);
             return res.json(fileObj);
         })
     }
@@ -87,7 +108,6 @@ const writeDataToFile = async (asyncitr) => {
     file.end();
     return file;
 }
-
 
 
 router.post('/login', async (req, res, next) => {

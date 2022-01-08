@@ -181,6 +181,9 @@ const pinFileToIPFS = async () => {
             pinata_secret_api_key: pinataSecretKey
         }
     });
+    const assetHash = res.data.IpfsHash
+    const metadataUrl = `ipfs://${assetHash}`
+    const recepientAddress = '';
     console.log(res.data);
 }
 

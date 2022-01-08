@@ -85,6 +85,16 @@ async function addFileToUser(userId, file) {
     }
 }
 
+async function getUserFiles(userId) {
+    const user = await getUserById(userId);
+    if (!!user.uploadedFiles) {
+        return user.uploadedFiles;
+    }
+    else {
+        return null;
+    }
+}
+
 
 module.exports = {
     getAllUsers,
@@ -93,5 +103,6 @@ module.exports = {
     writeUserData,
     updateUserData,
     addFileToUser,
+    getUserFiles,
     db
 };

@@ -10,7 +10,7 @@ const formidable = require('formidable');
 const auth = require('../components/auth');
 const { addFileToUser, getUserFiles } = require('../../database');
 const Web3 = require('web3');
-const contract = require('../../../blockchain/build/contracts/CredentialHash.json');
+const contract = require('../../blockchain/build/contracts/CredentialHash.json');
 const chainAPI = 'https://mainnet.infura.io/v3/5d0233c446ba4d538c2082aefc9bd130' // https://<network>.infura.io/v3/<PROJECT_ID>
 
 const setDefaultAccount = async () => {

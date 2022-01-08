@@ -62,10 +62,17 @@ router.post('/upload', async (req, res, next) => {
 
             const data = web3.eth.accounts.sign(fileHash.toString(), '6f49451d42e90662ee96cd7848f775203ad8358f0453dcc91451a5f7f9ccedd3');
 
-            const recoveredData = web3.eth.accounts.recover(data.message, data.signature);
-            deployedContract.methods.saveHash(fileHash.toString()).send({ from: web3.eth.defaultAccount }).on('receipt', () => {
-                console.log('received');
+            // save signature with user
+
+            const recoveredData = web3.eth.accounts.recover(data.message, data.signature); // recover data
+            let saveHash = null;
+            let result = null;
+
+            deployedContract.methods.saveHash(fileHash.toString()).send({ from: web3.eth.defaultAccount }).on('receipt', async (result) => {
+                saveHash = result
+                result = await deployedContract.methods.getHash().call({ to: saveHash.to })
             });
+
             // addFileToUser('10', fileObj);
             return res.json(fileObj);
         })

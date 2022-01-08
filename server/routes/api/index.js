@@ -91,9 +91,9 @@ router.post('/upload', async (req, res, next) => {
                 const tokenId = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).call({ from: recepientAddress, gas: '1000000' })
                 await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).send({ from: recepientAddress, gas: '1000000' });
 
-                console.log(tokenId); // store this tokenId to database with userAddress
                 const owner = await uniqueAssetDeployedContract.methods.ownerOf(tokenId).call({ from: recepientAddress, gas: '1000000' });
-                console.log(owner == web3.eth.defaultAccount);
+                const tokenUri = await uniqueAssetDeployedContract.methods.tokenURIs(tokenId).call({ from: recepientAddress, gas: '1000000' });
+
                 // const resData2 = await uniqueAssetDeployedContract.methods.tokenURIs(2).call({ from: recepientAddress });
                 // console.log('resData2', resData2);
                 // tokenId = resData.toNumber();

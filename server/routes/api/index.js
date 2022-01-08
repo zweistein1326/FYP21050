@@ -10,7 +10,8 @@ const formidable = require('formidable');
 const auth = require('../components/auth');
 const { addFileToUser, getUserFiles } = require('../../database');
 const Web3 = require('web3');
-const contract = require('../../blockchain/build/contracts/CredentialHash.json');
+const credentialHashContract = require('../../blockchain/build/contracts/CredentialHash.json');
+const uniqueAssetContract = require('../../blockchain/build/contracts/UniqueAsset.json');
 const chainAPI = 'https://mainnet.infura.io/v3/5d0233c446ba4d538c2082aefc9bd130' // https://<network>.infura.io/v3/<PROJECT_ID>
 const pinataAPIKey = process.env.PINATA_API_KEY;
 const pinataSecretKey = process.env.PINATA_SECRET_KEY
@@ -20,12 +21,13 @@ const FormData = require('form-data');
 
 const setDefaultAccount = async () => {
     var account = await web3.eth.getAccounts();
-    web3.eth.defaultAccount = account[0];
+    web3.eth.defaultAccount = account[2];
 }
 
-var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545'));
+var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545/'));
 setDefaultAccount();
-var deployedContract = new web3.eth.Contract(contract.abi, contract.networks[5777].address);
+var credentialHashDeployedContract = new web3.eth.Contract(credentialHashContract.abi, credentialHashContract.networks[5777].address);
+var uniqueAssetDeployedContract = new web3.eth.Contract(uniqueAssetContract.abi, '0x213fE4e5B00baD84F20C9e03713d9eB48fA44CaB');
 
 
 
@@ -71,12 +73,14 @@ router.post('/upload', async (req, res, next) => {
 
             const recoveredData = web3.eth.accounts.recover(data.message, data.signature); // recover data
             let saveHash = null;
-            let result = null;
+            let resultCid = null;
 
-            deployedContract.methods.saveHash(fileHash.toString()).send({ from: web3.eth.defaultAccount }).on('receipt', async (result) => {
+
+            credentialHashDeployedContract.methods.saveHash(fileHash.toString()).send({ from: web3.eth.defaultAccount }).on('receipt', async (result) => {
                 saveHash = result
-                resultCid = await deployedContract.methods.getHash().call({ to: saveHash.to })
+                resultCid = await credentialHashDeployedContract.methods.getHash().call({ to: saveHash.to })
             });
+            console.log(resultCid);
 
             // addFileToUser('10', fileObj);
             return res.json(fileObj);
@@ -169,7 +173,8 @@ router.post('/getAllFiles', async (req, res, next) => {
 const pinFileToIPFS = async () => {
     const url = `https://api.pinata.cloud/pinning/pinFileToIPFS`;
 
-    let data = new FormData();
+    var data = new FormData();
+    var tokenId = null;
 
     data.append('file', fs.createReadStream(__dirname + '/img/me.png'));
 
@@ -183,8 +188,21 @@ const pinFileToIPFS = async () => {
     });
     const assetHash = res.data.IpfsHash
     const metadataUrl = `ipfs://${assetHash}`
-    const recepientAddress = '';
-    console.log(res.data);
+    const recepientAddress = web3.eth.defaultAccount;
+    // credentialHashDeployedContract.methods.saveHash(fileHash.toString()).send({ from: web3.eth.defaultAccount }).on('receipt', async (result) => {
+    //     saveHash = result
+    //     resultCid = await credentialHashDeployedContract.methods.getHash().call({ to: saveHash.to })
+    // });
+    try {
+        const resData = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).call();
+        tokenId = resData.toNumber();
+    }
+    catch (e) {
+        console.log(e.message);
+    }
+
+    console.log(tokenId);
+
 }
 
 pinFileToIPFS();

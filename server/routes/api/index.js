@@ -72,15 +72,28 @@ router.post('/upload', async (req, res, next) => {
             // save signature with user
 
             const recoveredData = web3.eth.accounts.recover(data.message, data.signature); // recover data
-            let saveHash = null;
-            let resultCid = null;
 
+            // credentialHashDeployedContract.methods.saveHash(fileHash.toString()).send({ from: web3.eth.defaultAccount }).on('receipt', async (result) => {
+            //     saveHash = result
+            //     resultCid = await credentialHashDeployedContract.methods.getHash().call({ to: saveHash.to })
+            // });
+            // console.log(resultCid);
+            const assetHash = fileHash.toString();
+            const metadataUrl = `ipfs://${assetHash}`
+            const recepientAddress = web3.eth.defaultAccount;
+            // credentialHashDeployedContract.methods.saveHash(fileHash.toString()).send({ from: web3.eth.defaultAccount }).on('receipt', async (result) => {
+            //     saveHash = result
+            //     resultCid = await credentialHashDeployedContract.methods.getHash().call({ to: saveHash.to })
+            // });
+            try {
+                const resData = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).call();
+                tokenId = resData.toNumber();
+            }
+            catch (e) {
+                console.log(e.message);
+            }
 
-            credentialHashDeployedContract.methods.saveHash(fileHash.toString()).send({ from: web3.eth.defaultAccount }).on('receipt', async (result) => {
-                saveHash = result
-                resultCid = await credentialHashDeployedContract.methods.getHash().call({ to: saveHash.to })
-            });
-            console.log(resultCid);
+            console.log(tokenId);
 
             // addFileToUser('10', fileObj);
             return res.json(fileObj);
@@ -186,26 +199,6 @@ const pinFileToIPFS = async () => {
             pinata_secret_api_key: pinataSecretKey
         }
     });
-    const assetHash = res.data.IpfsHash
-    const metadataUrl = `ipfs://${assetHash}`
-    const recepientAddress = web3.eth.defaultAccount;
-    // credentialHashDeployedContract.methods.saveHash(fileHash.toString()).send({ from: web3.eth.defaultAccount }).on('receipt', async (result) => {
-    //     saveHash = result
-    //     resultCid = await credentialHashDeployedContract.methods.getHash().call({ to: saveHash.to })
-    // });
-    try {
-        const resData = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).call();
-        tokenId = resData.toNumber();
-    }
-    catch (e) {
-        console.log(e.message);
-    }
-
-    console.log(tokenId);
-
 }
-
-pinFileToIPFS();
-
 
 module.exports = router;

@@ -21,13 +21,13 @@ const FormData = require('form-data');
 
 const setDefaultAccount = async () => {
     var account = await web3.eth.getAccounts();
-    web3.eth.defaultAccount = account[2];
+    web3.eth.defaultAccount = account[0];
 }
 
 var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545/'));
 setDefaultAccount();
 var credentialHashDeployedContract = new web3.eth.Contract(credentialHashContract.abi, credentialHashContract.networks[5777].address);
-var uniqueAssetDeployedContract = new web3.eth.Contract(uniqueAssetContract.abi, '0x213fE4e5B00baD84F20C9e03713d9eB48fA44CaB');
+var uniqueAssetDeployedContract = new web3.eth.Contract(uniqueAssetContract.abi, '0xED16e2872fD2eE262D10c85C0aDFe494D5f9D0b1');
 
 
 
@@ -86,20 +86,39 @@ router.post('/upload', async (req, res, next) => {
             //     resultCid = await credentialHashDeployedContract.methods.getHash().call({ to: saveHash.to })
             // });
             try {
-                const resData = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).call();
-                tokenId = resData.toNumber();
+                console.log({ recepientAddress, assetHash, metadataUrl });
+                console.log(web3.eth.defaultAccount);
+                const tokenId = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).call({ from: recepientAddress, gas: '1000000' })
+                await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).send({ from: recepientAddress, gas: '1000000' });
+
+                console.log(tokenId); // store this tokenId to database with userAddress
+                const owner = await uniqueAssetDeployedContract.methods.ownerOf(tokenId).call({ from: recepientAddress, gas: '1000000' });
+                console.log(owner == web3.eth.defaultAccount);
+                // const resData2 = await uniqueAssetDeployedContract.methods.tokenURIs(2).call({ from: recepientAddress });
+                // console.log('resData2', resData2);
+                // tokenId = resData.toNumber();
+                // console.log(tokenId);
             }
             catch (e) {
                 console.log(e.message);
             }
 
-            console.log(tokenId);
+
 
             // addFileToUser('10', fileObj);
             return res.json(fileObj);
         })
     }
     // return res.json('Uploaded');
+})
+
+router.get('/getByTokenId/:tokenId', async (req, res, next) => {
+    const { tokenId } = req.params;
+    try {
+    }
+    catch (error) {
+        console.log(error.message);
+    }
 })
 
 /* 

@@ -12,6 +12,11 @@ const { addFileToUser, getUserFiles } = require('../../database');
 const Web3 = require('web3');
 const contract = require('../../blockchain/build/contracts/CredentialHash.json');
 const chainAPI = 'https://mainnet.infura.io/v3/5d0233c446ba4d538c2082aefc9bd130' // https://<network>.infura.io/v3/<PROJECT_ID>
+const pinataAPIKey = process.env.PINATA_API_KEY;
+const pinataSecretKey = process.env.PINATA_SECRET_KEY
+const pinata_secret_token = process.env.PINATA_SECRET_TOKEN;
+const axios = require('axios');
+const FormData = require('form-data');
 
 const setDefaultAccount = async () => {
     var account = await web3.eth.getAccounts();
@@ -29,7 +34,7 @@ router.get('/', async (req, res, next) => {
 })
 
 /* 
-    Upload File to IPFS and central database 
+    Upload File to IPFS 
 */
 router.post('/upload', async (req, res, next) => {
     // upload any kind of files
@@ -70,7 +75,7 @@ router.post('/upload', async (req, res, next) => {
 
             deployedContract.methods.saveHash(fileHash.toString()).send({ from: web3.eth.defaultAccount }).on('receipt', async (result) => {
                 saveHash = result
-                result = await deployedContract.methods.getHash().call({ to: saveHash.to })
+                resultCid = await deployedContract.methods.getHash().call({ to: saveHash.to })
             });
 
             // addFileToUser('10', fileObj);
@@ -159,5 +164,27 @@ router.post('/getAllFiles', async (req, res, next) => {
         return res.status(200).json({ files: null, message: 'User does not have any existing files' });
     }
 });
+
+
+const pinFileToIPFS = async () => {
+    const url = `https://api.pinata.cloud/pinning/pinFileToIPFS`;
+
+    let data = new FormData();
+
+    data.append('file', fs.createReadStream(__dirname + '/img/me.png'));
+
+    const res = await axios.post(url, data, {
+        maxContentLength: "Infinity",
+        headers: {
+            "Content-Type": `multipart/form-data;boundary = ${data._boundary}`,
+            pinata_api_key: pinataAPIKey,
+            pinata_secret_api_key: pinataSecretKey
+        }
+    });
+    console.log(res.data);
+}
+
+pinFileToIPFS();
+
 
 module.exports = router;

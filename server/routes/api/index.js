@@ -26,7 +26,7 @@ const setDefaultAccount = async () => {
 var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545/'));
 setDefaultAccount();
 var credentialHashDeployedContract = new web3.eth.Contract(credentialHashContract.abi, credentialHashContract.networks[5777].address);
-var uniqueAssetDeployedContract = new web3.eth.Contract(uniqueAssetContract.abi, '0xED16e2872fD2eE262D10c85C0aDFe494D5f9D0b1');
+var uniqueAssetDeployedContract = new web3.eth.Contract(uniqueAssetContract.abi, '0xabe0e84Dfe515aF547Cec11bFd1b8f45B772e23d');
 
 
 
@@ -41,7 +41,8 @@ router.post('/upload', async (req, res, next) => {
     // upload any kind of files
     // add file hash to ethereum
 
-    let fileObj = {};
+    let fileObj = {};    
+    let fileSend ={}
     if (req.files.inputFile) {
         const file = req.files.inputFile;
         const fileName = file.name;
@@ -63,10 +64,12 @@ router.post('/upload', async (req, res, next) => {
                 file: file,
                 name: fileName,
                 path: filePath,
-                hash: fileHash
+                hash: fileHash,
             }
 
-            const data = web3.eth.accounts.sign(fileHash.toString(), '6f49451d42e90662ee96cd7848f775203ad8358f0453dcc91451a5f7f9ccedd3');
+            
+
+            const data = web3.eth.accounts.sign(fileHash.toString(), '0f529545995df0da31150eeadb0036083d18698362c42e186cbdb785b984f0c9');
 
             // save signature with user
 
@@ -86,12 +89,24 @@ router.post('/upload', async (req, res, next) => {
             // });
             try {
                 console.log({ recepientAddress, assetHash, metadataUrl });
-                console.log(web3.eth.defaultAccount);
+                // console.log(web3.eth.defaultAccount, 'check default account');
                 const tokenId = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).call({ from: recepientAddress, gas: '1000000' })
-                await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).send({ from: recepientAddress, gas: '1000000' });
+                // console.log(tokenId.toNumber())
+                uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).send({ from: recepientAddress, gas: '1000000' }).then;
+                // const tokenId = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).call({ from: recepientAddress, gas: '1000000' })
 
-                const owner = await uniqueAssetDeployedContract.methods.ownerOf(tokenId).call({ from: recepientAddress, gas: '1000000' });
+                // const owner = await uniqueAssetDeployedContract.methods.ownerOf(tokenId).call({ from: recepientAddress, gas: '1000000' });
                 const tokenUri = await uniqueAssetDeployedContract.methods.tokenURIs(tokenId).call({ from: recepientAddress, gas: '1000000' });
+
+                // console.log(tokenName)
+
+                fileSend ={
+                    name: fileName,
+                    tokenId: tokenId.toNumber(),
+                }
+                // Transfer of ownership using transferFrom in Remix
+                
+
 
                 // const resData2 = await uniqueAssetDeployedContract.methods.tokenURIs(2).call({ from: recepientAddress });
                 // console.log('resData2', resData2);
@@ -105,11 +120,90 @@ router.post('/upload', async (req, res, next) => {
 
 
             // addFileToUser('10', fileObj);
-            return res.json(fileObj);
+            // Send TokenID
+            return res.json(fileSend);
         })
     }
     // return res.json('Uploaded');
 })
+
+/**
+ * Transfer of Ownership
+ * Input: tokenId
+ */
+router.post('/transfer', async (req, res, next) => {
+    // To get tokenid of asset requirements: recepientAddress, assetHash?, metadataUrl
+    console.log('checker')
+    
+    const fromAddress = req.body.from
+    const toAddress = req.body.to
+    const tokenId = req.body.tokenId
+    // console.log(tokenId,toAddress)
+    
+    const recepientAddress = web3.eth.defaultAccount;
+    try{
+        
+        const owner = await uniqueAssetDeployedContract.methods.ownerOf(tokenId).call({ from: recepientAddress, gas: '1000000' });
+        if(owner === fromAddress){
+            console.log(owner,recepientAddress)
+            uniqueAssetDeployedContract.methods.transferFrom(owner,toAddress, tokenId).send({ from: owner, gas: '1000000' });
+            const ret = {
+                message: 'Successful',
+                newOwner: req.body.to
+            }
+            res.json(ret)
+        }
+
+        res.json("Unsuccesful")
+    }
+    catch(e){
+        console.log(e.message)
+    }
+
+
+    
+    // try {
+
+    // }
+    // catch (error) {
+    //     console.log(error.message);
+    // }
+})
+
+router.post('/owner', async (req, res, next) => {
+    // To get tokenid of asset requirements: recepientAddress, assetHash?, metadataUrl
+    console.log('checker')
+    
+    // const fromAddress = req.body.from
+    // const toAddress = req.body.to
+    const tokenId = req.body.tokenId
+    console.log(tokenId)
+    
+    const recepientAddress = web3.eth.defaultAccount;
+    try{
+        // const tokenId = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).call({ from: recepientAddress, gas: '1000000' })
+        // console.log(tokenId.toNumber())
+        // const tokens = await uniqueAssetDeployedContract.methods.name().call({ from: recepientAddress, gas: '1000000' });;
+        const owner = await uniqueAssetDeployedContract.methods.ownerOf(tokenId).call({ from: recepientAddress, gas: '1000000' });;
+        console.log(owner)
+        // uniqueAssetDeployedContract.methods.transferFrom(owner,toAddress, tokenId).send({ from: owner, gas: '1000000' });
+        // console.log(tokenTransfer)
+        res.json('sending')
+    }
+    catch(e){
+        console.log(e.message)
+    }
+
+
+    
+    // try {
+
+    // }
+    // catch (error) {
+    //     console.log(error.message);
+    // }
+})
+
 
 router.get('/getByTokenId/:tokenId', async (req, res, next) => {
     const { tokenId } = req.params;

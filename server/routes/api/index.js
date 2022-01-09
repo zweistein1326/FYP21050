@@ -12,7 +12,6 @@ const { addFileToUser, getUserFiles } = require('../../database');
 const Web3 = require('web3');
 const credentialHashContract = require('../../blockchain/build/contracts/CredentialHash.json');
 const uniqueAssetContract = require('../../blockchain/build/contracts/UniqueAsset.json');
-const chainAPI = 'https://mainnet.infura.io/v3/5d0233c446ba4d538c2082aefc9bd130' // https://<network>.infura.io/v3/<PROJECT_ID>
 const pinataAPIKey = process.env.PINATA_API_KEY;
 const pinataSecretKey = process.env.PINATA_SECRET_KEY
 const pinata_secret_token = process.env.PINATA_SECRET_TOKEN;

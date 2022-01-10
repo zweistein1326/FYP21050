@@ -42,6 +42,7 @@ const Register = () => {
   const [tokens, setToken] = useState<TestResponseInterface[]>([]);
   const [showToken, setShowToken] = useState<any[]>([])
   const [tokenUrl, setTokenUrl] = useState <any[]>([]);
+  const [tokenCount, setTokenCount]= useState<number>(1);
 
   console.log("My token is", tokens)
 
@@ -88,14 +89,23 @@ const Register = () => {
         bodyFormData.append('inputFile', file);        
         try {
           const res : AxiosResponse<any> = await axios.post('http://127.0.0.1:8000/upload', bodyFormData)
-          const newTokenData = res.data
+          console.log(res.data);
+          const tokenData : AxiosResponse<any> = await axios.get('http://127.0.0.1:8000/getByTokenId/'+ res.data.tokenId,{
+          // params:{
+          //   tokenId : t.tokenId
+          // }
+          })
+          const newTokenData = tokenData.data
+          console.log('newTokenData', tokenData);
+          let x = <Link  color='black' underline='hover' variant='button' href={newTokenData.tokenUri} key={res.data.tokenId} display='block' >{tokenCount}.  {res.data.name}</Link>
+          setShowToken([...showToken,x])
+          setTokenCount(tokenCount+1)
           console.log('tokens',[...tokens, newTokenData])
           setToken([...tokens, newTokenData])
         } catch(err) {
           console.error(err)
         }
     }
-    
   } 
 
   // const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -175,31 +185,6 @@ const Register = () => {
       // )
     }
   }
-  useEffect( ()=>{
-    var urls = []
-    var i = 0;
-    const getUrl = () =>{
-      tokens.map(async (t) =>{
-        console.log('token for id', t.tokenId)
-
-        const res : AxiosResponse<any> = await axios.get('http://127.0.0.1:8000/getByTokenId/'+t.tokenId,{
-          // params:{
-          //   tokenId : t.tokenId
-          // }
-        })
-          const newTokenData = res.data
-          let x = <Link  color='black' underline='hover' variant='button' href={res.data.tokenUri} key={t.tokenId} display='block' >{++i}.  {t.name}</Link>
-          setShowToken([...showToken,x])
-          console.log('links',res)
-          console.log('show links', showToken)
-        })
-    }
-    
-    getUrl()
-
-    },[tokens])
-
-
   
   return (
     <Container component="main" maxWidth="xs">

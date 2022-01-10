@@ -17,6 +17,7 @@ const pinataSecretKey = process.env.PINATA_SECRET_KEY
 const pinata_secret_token = process.env.PINATA_SECRET_TOKEN;
 const axios = require('axios');
 const FormData = require('form-data');
+const { platform } = require('os');
 
 const setDefaultAccount = async () => {
     var account = await web3.eth.getAccounts();
@@ -26,7 +27,7 @@ const setDefaultAccount = async () => {
 var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545/'));
 setDefaultAccount();
 var credentialHashDeployedContract = new web3.eth.Contract(credentialHashContract.abi, credentialHashContract.networks[5777].address);
-var uniqueAssetDeployedContract = new web3.eth.Contract(uniqueAssetContract.abi, '0x254845Db0FBB2dA517fA88D231AC1aFf48c9197C');
+var uniqueAssetDeployedContract = new web3.eth.Contract(uniqueAssetContract.abi, '0x749ca7700F207C59ceD366dCb61E93a2b687fc4D');
 
 
 
@@ -40,7 +41,7 @@ router.get('/', async (req, res, next) => {
 router.post('/upload', async (req, res, next) => {
     // upload any kind of files
     // add file hash to ethereum
-    console.log('filesss',req.files)
+    console.log('filesss --------- ', req.files)
     let fileObj = {};
     let fileSend = {}
     if (req.files.inputFile) {
@@ -92,30 +93,29 @@ router.post('/upload', async (req, res, next) => {
                 console.log({ recepientAddress, assetHash, metadataUrl });
                 // console.log(web3.eth.defaultAccount, 'check default account');
                 const tokenId = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).call({ from: recepientAddress, gas: '1000000' })
+                const token = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).send({ from: recepientAddress, gas: '1000000' });
                 // console.log(tokenId.toNumber())
-                uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).send({ from: recepientAddress, gas: '1000000' }).then;
                 // const tokenId = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).call({ from: recepientAddress, gas: '1000000' })
 
                 // const owner = await uniqueAssetDeployedContract.methods.ownerOf(tokenId).call({ from: recepientAddress, gas: '1000000' });
 
-                // console.log(tokenName)
+                // console.log(tokenId)
+                // console.log(token);
 
-                fileSend = {
-                    name: fileName,
-                    tokenId: tokenId.toNumber(),
+                if (process.platform === "darwin") {
+                    fileSend = {
+                        name: fileName,
+                        tokenId: tokenId
+                    }
+                }
+                else {
+                    fileSend = {
+                        name: fileName,
+                        tokenId: tokenId.toNumber()
+                    }
                 }
                 // Transfer of ownership using transferFrom in Remix
 
-
-
-                // console.log(tokenName)
-
-                fileSend ={
-                    name: fileName,
-                    tokenId: tokenId.toNumber(),
-                }
-                // Transfer of ownership using transferFrom in Remix
-                
 
 
                 // const resData2 = await uniqueAssetDeployedContract.methods.tokenURIs(2).call({ from: recepientAddress });
@@ -163,7 +163,7 @@ router.post('/transfer', async (req, res, next) => {
             res.json(ret)
         }
 
-        res.json("Unsuccesful")
+        res.status(400).json("Unsuccesful")
     }
     catch (e) {
         console.log(e.message)
@@ -195,7 +195,7 @@ router.get('/owner', async (req, res, next) => {
         console.log(owner)
         // uniqueAssetDeployedContract.methods.transferFrom(owner,toAddress, tokenId).send({ from: owner, gas: '1000000' });
         // console.log(tokenTransfer)
-        res.json({owner})
+        res.json({ owner })
     }
     catch (e) {
         console.log(e.message)

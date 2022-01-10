@@ -178,12 +178,12 @@ router.post('/transfer', async (req, res, next) => {
     // }
 })
 
-router.post('/owner', async (req, res, next) => {
+router.get('/owner', async (req, res, next) => {
     // To get tokenid of asset requirements: recepientAddress, assetHash?, metadataUrl
     console.log('checker')
     // const fromAddress = req.body.from
     // const toAddress = req.body.to
-    const tokenId = req.body.tokenId
+    const tokenId = req.query.tokenId
     console.log(tokenId)
 
     const recepientAddress = web3.eth.defaultAccount;
@@ -195,7 +195,7 @@ router.post('/owner', async (req, res, next) => {
         console.log(owner)
         // uniqueAssetDeployedContract.methods.transferFrom(owner,toAddress, tokenId).send({ from: owner, gas: '1000000' });
         // console.log(tokenTransfer)
-        res.json('sending')
+        res.json({owner})
     }
     catch (e) {
         console.log(e.message)

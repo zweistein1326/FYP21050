@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Avatar,
   Button,
@@ -10,15 +10,25 @@ import {
   Link,
   Grid,
   Typography,
+  ListItem,
+  ListItemText,
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useMutation } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
 import { REGISTER } from '../graphql';
 import { ethers } from 'ethers';
+import axios, { AxiosResponse } from 'axios';
 import fs from 'fs';
+import { id } from 'ethers/lib/utils';
 
 declare var window: any;
+
+
+ interface TestResponseInterface {
+   name: string,
+   tokenId: number
+ }
 
 const Register = () => {
   const navigate = useNavigate();
@@ -29,7 +39,13 @@ const Register = () => {
   const [userBalance, setUserBalance] = useState<any>(null);
   const [connButtonText, setConnButtonText] = useState('Connect Wallet');
   const [file,setFile] = useState<File | null>(null);
+  const [tokens, setToken] = useState<TestResponseInterface[]>([]);
+  const [showToken, setShowToken] = useState<any[]>([])
+  const [tokenUrl, setTokenUrl] = useState <any[]>([]);
 
+  console.log("My token is", tokens)
+
+  // const []
   const connectWalletHandler = (event:any) => {
     event.preventDefault()
     if(window.ethereum){
@@ -62,15 +78,24 @@ const Register = () => {
     console.log(event.target.files[0]);
   }
 
-  const handleSubmitFile = (event:any) => {
+
+  const handleSubmitFile = async (event:any) => {
     event.preventDefault();
-    console.log(file);
+    console.log('file',file);
     var bodyFormData = new FormData();
     if(file!==null){
         console.log('updating data');
-        bodyFormData.append('abs', file, file.name);
-      }
-      console.log(bodyFormData)
+        bodyFormData.append('inputFile', file);        
+        try {
+          const res : AxiosResponse<any> = await axios.post('http://127.0.0.1:8000/upload', bodyFormData)
+          const newTokenData = res.data
+          console.log('tokens',[...tokens, newTokenData])
+          setToken([...tokens, newTokenData])
+        } catch(err) {
+          console.error(err)
+        }
+    }
+    
   } 
 
   // const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -106,6 +131,76 @@ const Register = () => {
   //     });
   // };
 
+  const showTokens = async () =>{
+    var i = 0
+    // var tokenLinks = []
+    // try {
+    //   // tokens.map(async (t:TestResponseInterface)=>{
+    //   //   const res : AxiosResponse<TestResponseInterface> = await axios.get('http://127.0.0.1:8000//getByTokenId/:tokenId',{
+    //   //     params:{
+    //   //       tokenId: t.tokenId
+    //   //     }
+    //   //   })
+    //   //   const newTokenData = res.data
+    //   //   console.log('links',res)
+    //   // })
+    // } catch(err) {
+    //   console.error(err)
+    // }
+    console.log('hello',tokens)
+    // return
+    if(tokens.length != 0){
+      console.log('checker')
+      for(let i=0; i<tokens.length; i++){
+        // const res : AxiosResponse<any> = await axios.get('http://127.0.0.1:8000//getByTokenId/:tokenId',{
+        //   params:{
+        //     tokenId: tokens[i].tokenId
+        //   }
+        // })       
+        console.log(tokens[i])
+        // setTokenUrl([...tokenUrl,token])
+      }
+    
+      // return(
+      //   <>
+          tokens.map((t:TestResponseInterface)=>{
+              let x = <Link >{t.name}</Link>
+              setShowToken([...showToken,x])
+            })
+      //   </>
+      // )
+    }else{
+      // return(
+      //   <></>
+      // )
+    }
+  }
+  useEffect( ()=>{
+    var urls = []
+    var i = 0;
+    const getUrl = () =>{
+      tokens.map(async (t) =>{
+        console.log('token for id', t.tokenId)
+
+        const res : AxiosResponse<any> = await axios.get('http://127.0.0.1:8000/getByTokenId/'+t.tokenId,{
+          // params:{
+          //   tokenId : t.tokenId
+          // }
+        })
+          const newTokenData = res.data
+          let x = <Link  color='black' underline='hover' variant='button' href={res.data.tokenUri} key={t.tokenId} display='block' >{++i}.  {t.name}</Link>
+          setShowToken([...showToken,x])
+          console.log('links',res)
+          console.log('show links', showToken)
+        })
+    }
+    
+    getUrl()
+
+    },[tokens])
+
+
+  
   return (
     <Container component="main" maxWidth="xs">
       <Box
@@ -156,6 +251,7 @@ const Register = () => {
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
             disabled={loading}
+            // onSubmit={}
           >
             {connButtonText}
           </Button>
@@ -186,10 +282,29 @@ const Register = () => {
           </Button>
 
           <Typography>Your uploaded files</Typography>
-          <Typography>1</Typography>
+          {/* <Typography>1</Typography>
           <Typography>2</Typography>
           <Typography>3</Typography>
-          <Typography>4</Typography>
+          <Typography>4</Typography> */}
+          
+          {/* {showTokens()}
+          {showTokens} */}
+          <Typography>{showToken}</Typography>
+          {/* <ListItem component={showTokens}>
+            <ListItemText primary="Text" />
+          </ListItem> */}
+          {/* {tokens.length != 0 ? 
+            <>
+              {tokens.forEach((t:any)=>{
+                console.log('tokensz',t)
+                  return(
+                    <Typography > {t.name}</Typography>
+                  )
+                })} 
+            </>
+          : <></>
+      } */}
+    
         </Box>
       </Box>
     </Container>

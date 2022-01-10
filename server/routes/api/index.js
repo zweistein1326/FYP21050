@@ -26,7 +26,7 @@ const setDefaultAccount = async () => {
 var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545/'));
 setDefaultAccount();
 var credentialHashDeployedContract = new web3.eth.Contract(credentialHashContract.abi, credentialHashContract.networks[5777].address);
-var uniqueAssetDeployedContract = new web3.eth.Contract(uniqueAssetContract.abi, '0xabe0e84Dfe515aF547Cec11bFd1b8f45B772e23d');
+var uniqueAssetDeployedContract = new web3.eth.Contract(uniqueAssetContract.abi, '0x254845Db0FBB2dA517fA88D231AC1aFf48c9197C');
 
 
 
@@ -40,10 +40,11 @@ router.get('/', async (req, res, next) => {
 router.post('/upload', async (req, res, next) => {
     // upload any kind of files
     // add file hash to ethereum
-
+    console.log('filesss',req.files)
     let fileObj = {};
     let fileSend = {}
     if (req.files.inputFile) {
+        console.log(req.file)
         const file = req.files.inputFile;
         const fileName = file.name;
         const filePath = __dirname + "/img/" + fileName;
@@ -68,7 +69,8 @@ router.post('/upload', async (req, res, next) => {
             }
 
 
-            const data = web3.eth.accounts.sign(fileHash.toString(), '0f529545995df0da31150eeadb0036083d18698362c42e186cbdb785b984f0c9');
+            // const data = web3.eth.accounts.sign(fileHash.toString(), '0f529545995df0da31150eeadb0036083d18698362c42e186cbdb785b984f0c9');
+            const data = web3.eth.accounts.sign(fileHash.toString(), '63b87947cc2fb9661ac095c901243d15f4329ebd4f9d9dad3bc4b41f3c0bff69');
 
             // save signature with user
 
@@ -176,12 +178,12 @@ router.post('/transfer', async (req, res, next) => {
     // }
 })
 
-router.post('/owner', async (req, res, next) => {
+router.get('/owner', async (req, res, next) => {
     // To get tokenid of asset requirements: recepientAddress, assetHash?, metadataUrl
     console.log('checker')
     // const fromAddress = req.body.from
     // const toAddress = req.body.to
-    const tokenId = req.body.tokenId
+    const tokenId = req.query.tokenId
     console.log(tokenId)
 
     const recepientAddress = web3.eth.defaultAccount;
@@ -193,7 +195,7 @@ router.post('/owner', async (req, res, next) => {
         console.log(owner)
         // uniqueAssetDeployedContract.methods.transferFrom(owner,toAddress, tokenId).send({ from: owner, gas: '1000000' });
         // console.log(tokenTransfer)
-        res.json('sending')
+        res.json({owner})
     }
     catch (e) {
         console.log(e.message)
@@ -211,6 +213,9 @@ router.post('/owner', async (req, res, next) => {
 
 router.get('/getByTokenId/:tokenId', async (req, res, next) => {
     const { tokenId } = req.params;
+    console.log('check id', tokenId)
+    const recepientAddress = web3.eth.defaultAccount;
+
     try {
         const tokenUri = await uniqueAssetDeployedContract.methods.tokenURIs(tokenId).call({ from: recepientAddress, gas: '1000000' });
         return res.status(200).json({ tokenUri });

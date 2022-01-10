@@ -54,7 +54,7 @@ const CredentialTile = (props:any) => {
             color="success" 
             variant="contained" 
             sx={{ mt:3, mb:2 }}>
-                Accept
+                Accept!
             </Button>
             <Button onClick={revokeCredential}
             color="error"

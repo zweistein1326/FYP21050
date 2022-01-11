@@ -42,6 +42,7 @@ router.post('/upload', async (req, res, next) => {
     // upload any kind of files
     // add file hash to ethereum
     console.log('filesss --------- ', req.files)
+    const sender = req.body.sender;
     let fileObj = {};
     let fileSend = {}
     if (req.files.inputFile) {
@@ -84,7 +85,7 @@ router.post('/upload', async (req, res, next) => {
             // console.log(resultCid);
             const assetHash = fileHash.toString();
             const metadataUrl = `ipfs://${assetHash}`
-            const recepientAddress = web3.eth.defaultAccount;
+            const recepientAddress = sender;
             // credentialHashDeployedContract.methods.saveHash(fileHash.toString()).send({ from: web3.eth.defaultAccount }).on('receipt', async (result) => {
             //     saveHash = result
             //     resultCid = await credentialHashDeployedContract.methods.getHash().call({ to: saveHash.to })
@@ -95,6 +96,7 @@ router.post('/upload', async (req, res, next) => {
                 const tokenId = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).call({ from: recepientAddress, gas: '1000000' })
                 const token = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).send({ from: recepientAddress, gas: '1000000' });
                 // console.log(tokenId.toNumber())
+                console.log(fileName, tokenId);
                 // const tokenId = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).call({ from: recepientAddress, gas: '1000000' })
 
                 // const owner = await uniqueAssetDeployedContract.methods.ownerOf(tokenId).call({ from: recepientAddress, gas: '1000000' });
@@ -149,13 +151,11 @@ router.post('/transfer', async (req, res, next) => {
     const tokenId = req.body.tokenId
     // console.log(tokenId,toAddress)
 
-    const recepientAddress = web3.eth.defaultAccount;
     try {
-
-        const owner = await uniqueAssetDeployedContract.methods.ownerOf(tokenId).call({ from: recepientAddress, gas: '1000000' });
-        if (owner === fromAddress) {
-            console.log(owner, recepientAddress)
-            uniqueAssetDeployedContract.methods.transferFrom(owner, toAddress, tokenId).send({ from: owner, gas: '1000000' });
+        const owner = await uniqueAssetDeployedContract.methods.ownerOf(tokenId).call({ from: fromAddress, gas: '1000000' });
+        console.log(owner, fromAddress)
+        if (owner.toLowerCase() === fromAddress.toLowerCase()) {
+            uniqueAssetDeployedContract.methods.transferFrom(fromAddress, toAddress, tokenId).send({ from: fromAddress, gas: '1000000' });
             const ret = {
                 message: 'Successful',
                 newOwner: req.body.to

@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ApolloProvider, ApolloClient, InMemoryCache } from '@apollo/client';
 import { RestLink } from 'apollo-link-rest';
-import Login from './pages/Login';
+// import Login from './pages/Login';
 import Home from './pages/Home';
 import Register from './pages/Register';
 import CredentialPage from './pages/CredentialPage';
@@ -49,7 +49,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
+          {/* <Route path="/login" element={<Login />} /> */}
           <Route path="/register" element={<Register />} />
           <Route path="/user/:id" element={<Home />} />
           <Route path="/user/:id/:credentialId" element={<CredentialPage />} />

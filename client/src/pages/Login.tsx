@@ -16,7 +16,7 @@ import { useMutation } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
 import { LOGIN } from '../graphql';
 import {connect} from 'react-redux';
-import { login } from '../actions/auth';
+// import { login } from '../actions/auth';
 import { User } from '../models/User';
 import { privateEncrypt } from 'crypto';
 
@@ -134,7 +134,7 @@ const Login = (props:any) => {
 };
 
 const mapDispatchToProps = (dispatch:any)=> ({
-  login: (userData:User) => dispatch(login(userData)),
+//   login: (userData:User) => dispatch(login(userData)),
   // logout: () => dispatch(logout())
 });
 

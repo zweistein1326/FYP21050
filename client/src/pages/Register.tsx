@@ -21,6 +21,9 @@ import { ethers } from 'ethers';
 import axios, { AxiosResponse } from 'axios';
 import fs from 'fs';
 import { id } from 'ethers/lib/utils';
+import CredentialTile from '../components/CredentialTile';
+import { useDispatch } from 'react-redux';
+import { setAccount } from '../actions/auth';
 
 declare var window: any;
 
@@ -43,6 +46,7 @@ const Register = () => {
   const [showToken, setShowToken] = useState<any[]>([])
   const [tokenUrl, setTokenUrl] = useState <any[]>([]);
   const [tokenCount, setTokenCount]= useState<number>(1);
+  const dispatch = useDispatch();
 
   console.log("My token is", tokens)
 
@@ -52,6 +56,7 @@ const Register = () => {
     if(window.ethereum){
       window.ethereum.request({method:'eth_requestAccounts'}).then(async (result:any[]) => {
         await accountChangeHandler(result[0]);
+        dispatch(setAccount(result[0]));
       }).then(()=>{
       });
     }
@@ -79,28 +84,24 @@ const Register = () => {
     console.log(event.target.files[0]);
   }
 
-
   const handleSubmitFile = async (event:any) => {
     event.preventDefault();
     console.log('file',file);
     var bodyFormData = new FormData();
     if(file!==null){
         console.log('updating data');
-        bodyFormData.append('inputFile', file);        
+        bodyFormData.append('inputFile', file); 
+        bodyFormData.append('sender', defaultAccount);       
         try {
           const res : AxiosResponse<any> = await axios.post('http://127.0.0.1:8000/upload', bodyFormData)
-          console.log(res.data);
-          const tokenData : AxiosResponse<any> = await axios.get('http://127.0.0.1:8000/getByTokenId/'+ res.data.tokenId,{
-          // params:{
-          //   tokenId : t.tokenId
-          // }
-          })
+          const tokenData : AxiosResponse<any> = await axios.get('http://127.0.0.1:8000/getByTokenId/'+ res.data.tokenId)
+          const owner : AxiosResponse<any> = await axios.get('http://127.0.0.1:8000/owner?tokenId='+ res.data.tokenId)
+          setFile(null);
+          console.log(owner.data);
           const newTokenData = tokenData.data
-          console.log('newTokenData', tokenData);
-          let x = <Link  color='black' underline='hover' variant='button' href={newTokenData.tokenUri} key={res.data.tokenId} display='block' >{tokenCount}.  {res.data.name}</Link>
+          let x = <CredentialTile newTokenData = {newTokenData} tokenData={res.data} owner={owner.data.owner} tokenCount={tokenCount}/>
           setShowToken([...showToken,x])
           setTokenCount(tokenCount+1)
-          console.log('tokens',[...tokens, newTokenData])
           setToken([...tokens, newTokenData])
         } catch(err) {
           console.error(err)

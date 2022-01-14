@@ -27,7 +27,7 @@ const setDefaultAccount = async () => {
 var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545/'));
 setDefaultAccount();
 var credentialHashDeployedContract = new web3.eth.Contract(credentialHashContract.abi, credentialHashContract.networks[5777].address);
-var uniqueAssetDeployedContract = new web3.eth.Contract(uniqueAssetContract.abi, '0x749ca7700F207C59ceD366dCb61E93a2b687fc4D');
+var uniqueAssetDeployedContract = new web3.eth.Contract(uniqueAssetContract.abi, '0x4c5584406d6F6a84D075D10F83f76514053386a1');
 
 
 

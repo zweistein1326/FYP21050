@@ -2,15 +2,15 @@ import { useEffect, useState } from "react";
 import { connect, useSelector } from "react-redux"
 import { Alert, Box, Button, Typography, Link, TextField } from "@mui/material";
 import { useMutation } from "@apollo/client";
-import { CHANGEPENDINGSTATUS, CHANGESTATUS } from "../graphql";
+// import { CHANGEPENDINGSTATUS, CHANGESTATUS } from "../graphql";
 import axios, { AxiosResponse } from "axios";
 
 const CredentialTile = (props:any) => {
     const account = useSelector((state:any)=> state.auth.account);
     console.log(account);
     const {credential,title} = props;
-    const [changeCredentialPendingStatus,{loading,error}] = useMutation(CHANGEPENDINGSTATUS);
-    const [changeCredentialStatus,{loading:loading2,error:error2}] = useMutation(CHANGESTATUS);
+    // const [changeCredentialPendingStatus,{loading,error}] = useMutation(CHANGEPENDINGSTATUS);
+    // const [changeCredentialStatus,{loading:loading2,error:error2}] = useMutation(CHANGESTATUS);
     const [receiver, setReceiver] = useState<string>('');
     const [owner, setOwner] = useState<string>('');
 

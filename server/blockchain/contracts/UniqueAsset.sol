@@ -20,8 +20,4 @@ contract UniqueAsset is ERC721{
         return newItemId;
     }
 
-    function abc() public returns (string memory){
-        return 'abc';
-    }
-
 }

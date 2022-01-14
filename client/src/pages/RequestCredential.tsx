@@ -1,10 +1,10 @@
 import { useMutation } from "@apollo/client";
 import { Box, Button, TextField, Typography } from "@mui/material"
-import { REQUESTCREDENTIAL } from "../graphql";
+// import { REQUESTCREDENTIAL } from "../graphql";
 
 const RequestCredential = (props:any) => {
 
-    const [requestCredential,{loading,error}] = useMutation(REQUESTCREDENTIAL);
+    // const [requestCredential,{loading,error}] = useMutation(REQUESTCREDENTIAL);
 
     const handleSubmit = async(event:React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -15,14 +15,14 @@ const RequestCredential = (props:any) => {
             message: data.get('message')
         }
 
-        requestCredential({
-            variables:{
-                input: payload
-            }
-        }).then((res)=>{
-            const {status,message} = res.data.requestCredential;
-            console.log(status, message);
-        });
+        // requestCredential({
+        //     variables:{
+        //         input: payload
+        //     }
+        // }).then((res)=>{
+        //     const {status,message} = res.data.requestCredential;
+        //     console.log(status, message);
+        // });
     }
 
     return (
@@ -51,7 +51,7 @@ const RequestCredential = (props:any) => {
                 type="submit" 
                 variant="contained" 
                 sx = {{ mt:3, mb:2 }}
-                disabled={loading}
+                // disabled={loading}
                 >
                     Submit
                 </Button>

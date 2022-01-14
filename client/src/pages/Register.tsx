@@ -16,7 +16,7 @@ import {
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useMutation } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
-import { REGISTER } from '../graphql';
+// import { REGISTER } from '../graphql';
 import { ethers } from 'ethers';
 import axios, { AxiosResponse } from 'axios';
 import fs from 'fs';
@@ -36,7 +36,7 @@ declare var window: any;
 const Register = () => {
   const navigate = useNavigate();
   const [message, setMessage] = useState<string>('');
-  const [submitRegister, { loading, error }] = useMutation(REGISTER);
+  // const [submitRegister, { loading, error }] = useMutation(REGISTER);
   const [errorMessage, setErrorMessage] = useState<any>(null);
   const [defaultAccount, setDefaultAccount] = useState<any>(null);
   const [userBalance, setUserBalance] = useState<any>(null);
@@ -236,7 +236,7 @@ const Register = () => {
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={loading}
+            // disabled={loading}
             // onSubmit={}
           >
             {connButtonText}
@@ -262,7 +262,7 @@ const Register = () => {
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={loading}
+            // disabled={loading}
           >
             Submit File
           </Button>

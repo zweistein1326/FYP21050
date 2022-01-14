@@ -14,7 +14,7 @@ import {
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useMutation } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
-import { LOGIN } from '../graphql';
+// import { LOGIN } from '../graphql';
 import {connect} from 'react-redux';
 // import { login } from '../actions/auth';
 import { User } from '../models/User';
@@ -24,7 +24,7 @@ import { privateEncrypt } from 'crypto';
 const Login = (props:any) => {
   const navigate = useNavigate();
   const [message, setMessage] = useState<string>('');
-  const [submitLogin, { loading, error }] = useMutation(LOGIN);
+  // const [submitLogin, { loading, error }] = useMutation(LOGIN);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -38,27 +38,27 @@ const Login = (props:any) => {
       email: data.get('email'),
       password: password,
     };
-
-    submitLogin({
-      variables: {
-        input: payload,
-      },
-    })
-      .then((res) => {
-        const { status, token, message, user } = res.data.login;
-        if (status === 'success') {
-          props.login(user)
-          localStorage.setItem('token', token);
-          navigate(`/user/${user.id}`);
-        } else {
-          setMessage(message);
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        if (error) setMessage(error.message);
-      });
-  };
+  }
+  //   submitLogin({
+  //     variables: {
+  //       input: payload,
+  //     },
+  //   })
+  //     .then((res) => {
+  //       const { status, token, message, user } = res.data.login;
+  //       if (status === 'success') {
+  //         props.login(user)
+  //         localStorage.setItem('token', token);
+  //         navigate(`/user/${user.id}`);
+  //       } else {
+  //         setMessage(message);
+  //       }
+  //     })
+  //     .catch((err) => {
+  //       console.error(err);
+  //       if (error) setMessage(error.message);
+  //     });
+  // };
 
   return (
     <Container component="main" maxWidth="xs">
@@ -111,7 +111,7 @@ const Login = (props:any) => {
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={loading}
+            // disabled={loading}
           >
             Sign In
           </Button>

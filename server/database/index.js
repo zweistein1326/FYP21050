@@ -71,7 +71,7 @@ async function addFileToUser(userId, file) {
     } else {
         console.log(file.hash.toString());
         uploadedFiles = [file.hash.toString()];
-        console.log(uploadedFiles);
+        console.log('uploadedFiles',uploadedFiles);
     }
     try {
         set(

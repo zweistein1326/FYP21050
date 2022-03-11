@@ -2,9 +2,9 @@ const router = require('express').Router();
 const ipfsClient = require('ipfs-http-client');
 const fs = require('fs');
 const ipfs = ipfsClient.create({
-    host: "localhost",
+    host: "ipfs.infura.io",
     port: 5001,
-    protocol: "http"
+    protocol: "https"
 });
 const formidable = require('formidable');
 const auth = require('../components/auth');
@@ -24,10 +24,10 @@ const setDefaultAccount = async () => {
     web3.eth.defaultAccount = account[0];
 }
 
-var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545/'));
+var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545/')); // replace with Infura ID
 setDefaultAccount();
 var credentialHashDeployedContract = new web3.eth.Contract(credentialHashContract.abi, credentialHashContract.networks[5777].address);
-var uniqueAssetDeployedContract = new web3.eth.Contract(uniqueAssetContract.abi, '0x749ca7700F207C59ceD366dCb61E93a2b687fc4D');
+var uniqueAssetDeployedContract = new web3.eth.Contract(uniqueAssetContract.abi, '0x18223DE499C6264da1150f8E4320Ba438A6Ac9A9');
 
 
 
@@ -44,9 +44,8 @@ router.post('/upload', async (req, res, next) => {
     console.log('filesss --------- ', req.files)
     const sender = req.body.sender;
     let fileObj = {};
-    let fileSend = {}
+    let fileSend = {};
     if (req.files.inputFile) {
-        console.log(req.file)
         const file = req.files.inputFile;
         const fileName = file.name;
         const filePath = __dirname + "/img/" + fileName;
@@ -72,7 +71,7 @@ router.post('/upload', async (req, res, next) => {
 
 
             // const data = web3.eth.accounts.sign(fileHash.toString(), '0f529545995df0da31150eeadb0036083d18698362c42e186cbdb785b984f0c9');
-            const data = web3.eth.accounts.sign(fileHash.toString(), '63b87947cc2fb9661ac095c901243d15f4329ebd4f9d9dad3bc4b41f3c0bff69');
+            const data = web3.eth.accounts.sign(fileHash.toString(), '3e4ebfe47ed6522a123e11ffef8022f0883baba2fac7f7aa709f50c783b39c88');
 
             // save signature with user
 
@@ -84,7 +83,7 @@ router.post('/upload', async (req, res, next) => {
             // });
             // console.log(resultCid);
             const assetHash = fileHash.toString();
-            const metadataUrl = `ipfs://${assetHash}`
+            const metadataUrl = `https://ipfs.io/ipfs/${assetHash}`
             const recepientAddress = sender;
             // credentialHashDeployedContract.methods.saveHash(fileHash.toString()).send({ from: web3.eth.defaultAccount }).on('receipt', async (result) => {
             //     saveHash = result
@@ -93,7 +92,11 @@ router.post('/upload', async (req, res, next) => {
             try {
                 console.log({ recepientAddress, assetHash, metadataUrl });
                 // console.log(web3.eth.defaultAccount, 'check default account');
+                
+                // This method gets the token Number
                 const tokenId = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).call({ from: recepientAddress, gas: '1000000' })
+                
+                // This method creates a new token
                 const token = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).send({ from: recepientAddress, gas: '1000000' });
                 // console.log(tokenId.toNumber())
                 console.log(fileName, tokenId);
@@ -287,6 +290,16 @@ router.post('/login', async (req, res, next) => {
         })
 })
 
+router.get('/getFilesByUser',async(req,res,next)=>{
+    const userId = req.query.userId;
+    const files = await getFilesByUser({userId});
+    return res.status(200).json({files})
+})
+
+getFilesByUser = ({userId}) => {
+    return [];
+}
+
 /*
     Register new user
 */
@@ -324,5 +337,6 @@ const pinFileToIPFS = async () => {
         }
     });
 }
+
 
 module.exports = router;

@@ -16,7 +16,6 @@ import {
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useMutation } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
-import { REGISTER } from '../graphql';
 import { ethers } from 'ethers';
 import axios, { AxiosResponse } from 'axios';
 import fs from 'fs';
@@ -36,7 +35,6 @@ declare var window: any;
 const Register = () => {
   const navigate = useNavigate();
   const [message, setMessage] = useState<string>('');
-  const [submitRegister, { loading, error }] = useMutation(REGISTER);
   const [errorMessage, setErrorMessage] = useState<any>(null);
   const [defaultAccount, setDefaultAccount] = useState<any>(null);
   const [userBalance, setUserBalance] = useState<any>(null);
@@ -57,7 +55,12 @@ const Register = () => {
       window.ethereum.request({method:'eth_requestAccounts'}).then(async (result:any[]) => {
         await accountChangeHandler(result[0]);
         dispatch(setAccount(result[0]));
-      }).then(()=>{
+        return result[0];
+      }).then(async(account:any)=>{
+          console.log(account);
+          // const res : AxiosResponse<any> = await axios.get('http://127.0.0.1:8000/getFilesByUser?userId='+ account);
+          const res : AxiosResponse<any> = await axios.get('http://127.0.0.1:8000/getFilesByUser?userId='+ account)
+          console.log("res",res);
       });
     }
     else{
@@ -94,6 +97,7 @@ const Register = () => {
         bodyFormData.append('sender', defaultAccount);       
         try {
           const res : AxiosResponse<any> = await axios.post('http://127.0.0.1:8000/upload', bodyFormData)
+          console.log(res);
           const tokenData : AxiosResponse<any> = await axios.get('http://127.0.0.1:8000/getByTokenId/'+ res.data.tokenId)
           const owner : AxiosResponse<any> = await axios.get('http://127.0.0.1:8000/owner?tokenId='+ res.data.tokenId)
           setFile(null);
@@ -236,7 +240,6 @@ const Register = () => {
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={loading}
             // onSubmit={}
           >
             {connButtonText}
@@ -262,7 +265,6 @@ const Register = () => {
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={loading}
           >
             Submit File
           </Button>

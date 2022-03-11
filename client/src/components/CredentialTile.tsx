@@ -2,15 +2,12 @@ import { useEffect, useState } from "react";
 import { connect, useSelector } from "react-redux"
 import { Alert, Box, Button, Typography, Link, TextField } from "@mui/material";
 import { useMutation } from "@apollo/client";
-import { CHANGEPENDINGSTATUS, CHANGESTATUS } from "../graphql";
 import axios, { AxiosResponse } from "axios";
 
 const CredentialTile = (props:any) => {
     const account = useSelector((state:any)=> state.auth.account);
     console.log(account);
     const {credential,title} = props;
-    const [changeCredentialPendingStatus,{loading,error}] = useMutation(CHANGEPENDINGSTATUS);
-    const [changeCredentialStatus,{loading:loading2,error:error2}] = useMutation(CHANGESTATUS);
     const [receiver, setReceiver] = useState<string>('');
     const [owner, setOwner] = useState<string>('');
 
@@ -38,7 +35,7 @@ const CredentialTile = (props:any) => {
 
     return(
         <Box>
-            <Link color='black' underline='hover' variant='button' href={props.newTokenData.tokenUri} key={props.tokenData.tokenId} display='block' >{props.tokenCount}.  {props.tokenData.name}</Link>
+            <a href={props.newTokenData.tokenUri} target="_blank" key={props.tokenData.tokenId}>{props.tokenCount}.  {props.tokenData.name}</a>
             <Typography>Owner: {owner}</Typography>
             <TextField name="receiver_address" placeholder="Transfer to" value={receiver} onChange={(receiver)=>{setReceiver(receiver.target.value)}}/>
             <Button onClick = {transfer}>Transfer</Button>

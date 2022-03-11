@@ -3,7 +3,6 @@ import { Box, Button, FormControl, FormHelperText, Input, InputLabel, TextField,
 import { useState } from "react";
 import { connect } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { ADDCREDENTIAL } from "../graphql";
 
 var CryptoJS = require('crypto-js');
 var SHA256 = require('crypto-js/sha256');
@@ -14,8 +13,6 @@ const privateKey = 'MIICXAIBAAKBgQDLyT/Ah5gtJu74KRpNatZgFzdePXdRYLvknjBCqanlhzkf
 const AddCredential = (props:any) => {
 
     const navigate = useNavigate();
-    const [addCredential,{loading,error}] = useMutation(ADDCREDENTIAL);
-
 
     const handleSubmit = async(event: React.FormEvent<HTMLFormElement>)=>{
         event.preventDefault();
@@ -40,16 +37,6 @@ const AddCredential = (props:any) => {
 
         let payload = {...tempPayload, hash, signature}
 
-        addCredential({
-            variables:{
-                input:payload
-            }
-        }).then((res)=>{
-            const {status, credential, message} = res.data.addCredential;
-            if(status==="success"){
-                console.log(credential);
-            }
-        })
     }
     return (
         <Box>
@@ -87,7 +74,6 @@ const AddCredential = (props:any) => {
                 type="submit" 
                 variant="contained" 
                 sx = {{ mt:3, mb:2 }}
-                disabled={loading}
                 >
                     Submit
                 </Button>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Avatar,
   Button,
@@ -10,182 +10,107 @@ import {
   Link,
   Grid,
   Typography,
-  ListItem,
-  ListItemText,
+  Alert,
+  AlertTitle
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useMutation } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
-import { REGISTER } from '../graphql';
-import { ethers } from 'ethers';
+import { LOGIN } from '../graphql';
+import {connect} from 'react-redux';
+import { login } from '../actions/auth';
+import { User } from '../models/User';
 import axios, { AxiosResponse } from 'axios';
-import fs from 'fs';
-import { id } from 'ethers/lib/utils';
+import { privateEncrypt } from 'crypto';
 
 declare var window: any;
+const {ethereum} = window;
 
-
- interface TestResponseInterface {
-   name: string,
-   tokenId: number
- }
-
-const Register = () => {
+const Login = (props:any) => {
   const navigate = useNavigate();
   const [message, setMessage] = useState<string>('');
-  const [submitRegister, { loading, error }] = useMutation(REGISTER);
-  const [errorMessage, setErrorMessage] = useState<any>(null);
-  const [defaultAccount, setDefaultAccount] = useState<any>(null);
-  const [userBalance, setUserBalance] = useState<any>(null);
-  const [connButtonText, setConnButtonText] = useState('Connect Wallet');
-  const [file,setFile] = useState<File | null>(null);
-  const [tokens, setToken] = useState<TestResponseInterface[]>([]);
-  const [showToken, setShowToken] = useState<any[]>([])
-  const [tokenUrl, setTokenUrl] = useState <any[]>([]);
-  const [tokenCount, setTokenCount]= useState<number>(1);
-
-  console.log("My token is", tokens)
-
+  const [submitLogin, { loading, error }] = useMutation(LOGIN);
+  const [username, setUsername] = useState<string>('');
+  const [address, setAddress] = useState<string>('')
+  // const [privateKey, setPrivateKey] = useState<string>('');
   // const []
-  const connectWalletHandler = (event:any) => {
-    event.preventDefault()
-    if(window.ethereum){
-      window.ethereum.request({method:'eth_requestAccounts'}).then(async (result:any[]) => {
-        await accountChangeHandler(result[0]);
-      }).then(()=>{
-      });
+
+  // const accounts = await ethereum.request({method: 'eth_requestAccounts'});
+  // console.log('account', accounts[0]);
+  const connectWalletHandler = async () => {
+    try{
+      const accounts = await ethereum.request({method: 'eth_requestAccounts'});
+      console.log('account', accounts[0]);
+      
+      // console.log("Wallet exists! We're ready to go!");
+    } catch(err){
+      console.log(err);
     }
-    else{
-      setErrorMessage('Install Metamask');
-    }
   }
 
-  const accountChangeHandler = async(newAccount:any) => {
-    setDefaultAccount(newAccount);
-    getUserBalance(newAccount);
-    setConnButtonText('Disconnect Wallet');
-  }
+  useEffect(()=>{
+    connectWalletHandler();
+  },[])
 
-  const getUserBalance = (address:any) =>{
-    window.ethereum.request({method:'eth_getBalance', params:[address,'latest']}).then((balance:any)=>{
-      console.log(balance);
-      setUserBalance(ethers.utils.formatEther(balance));
-    })
-  }
-
-  const onFileUpload = (event:any) => {
-    event.preventDefault();
-    setFile(event.target.files[0]);
-    console.log(event.target.files[0]);
-  }
-
-
-  const handleSubmitFile = async (event:any) => {
-    event.preventDefault();
-    console.log('file',file);
-    var bodyFormData = new FormData();
-    if(file!==null){
-        console.log('updating data');
-        bodyFormData.append('inputFile', file);        
-        try {
-          const res : AxiosResponse<any> = await axios.post('http://127.0.0.1:8000/upload', bodyFormData)
-          console.log(res.data);
-          const tokenData : AxiosResponse<any> = await axios.get('http://127.0.0.1:8000/getByTokenId/'+ res.data.tokenId,{
-          // params:{
-          //   tokenId : t.tokenId
-          // }
-          })
-          const newTokenData = tokenData.data
-          console.log('newTokenData', tokenData);
-          let x = <Link  color='black' underline='hover' variant='button' href={newTokenData.tokenUri} key={res.data.tokenId} display='block' >{tokenCount}.  {res.data.name}</Link>
-          setShowToken([...showToken,x])
-          setTokenCount(tokenCount+1)
-          console.log('tokens',[...tokens, newTokenData])
-          setToken([...tokens, newTokenData])
-        } catch(err) {
-          console.error(err)
-        }
-    }
-  } 
-
-  // const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-  //   event.preventDefault();
-  //   const data = new FormData(event.currentTarget);
-
-  //   if (data.get('password') !== data.get('confirm-password')) {
-  //     setMessage('Password does not match');
-  //     return;
-  //   }
-
-  //   const payload = {
-  //     password: data.get('password'),
-  //   };
-
-  //   submitRegister({
-  //     variables: {
-  //       input: payload,
-  //     },
-  //   })
-  //     .then((res) => {
-  //       const { status, privateKey, message } = res.data.register;
-  //       if (status === 'success') {
-  //         localStorage.setItem('privateKey', privateKey);
-  //         navigate('/');
-  //       } else {
-  //         setMessage(message);
-  //       }
-  //     })
-  //     .catch((err) => {
-  //       console.error(err);
-  //       if (error) setMessage(error.message);
-  //     });
-  // };
-
-  const showTokens = async () =>{
-    var i = 0
-    // var tokenLinks = []
-    // try {
-    //   // tokens.map(async (t:TestResponseInterface)=>{
-    //   //   const res : AxiosResponse<TestResponseInterface> = await axios.get('http://127.0.0.1:8000//getByTokenId/:tokenId',{
-    //   //     params:{
-    //   //       tokenId: t.tokenId
-    //   //     }
-    //   //   })
-    //   //   const newTokenData = res.data
-    //   //   console.log('links',res)
-    //   // })
-    // } catch(err) {
-    //   console.error(err)
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    // console.log('check')
+    // if(username && address){
+    //   // if(!accounts[0]){
+    //     <Alert severity="warning">
+    //     <AlertTitle>Warning</AlertTitle>
+    //     Please fill in the required information.
+    //   </Alert>
+    //   // }
     // }
-    console.log('hello',tokens)
-    // return
-    if(tokens.length != 0){
-      console.log('checker')
-      for(let i=0; i<tokens.length; i++){
-        // const res : AxiosResponse<any> = await axios.get('http://127.0.0.1:8000//getByTokenId/:tokenId',{
-        //   params:{
-        //     tokenId: tokens[i].tokenId
-        //   }
-        // })       
-        console.log(tokens[i])
-        // setTokenUrl([...tokenUrl,token])
-      }
-    
-      // return(
-      //   <>
-          tokens.map((t:TestResponseInterface)=>{
-              let x = <Link >{t.name}</Link>
-              setShowToken([...showToken,x])
-            })
-      //   </>
-      // )
-    }else{
-      // return(
-      //   <></>
-      // )
+    event.preventDefault();
+    // const data = new FormData(event.currentTarget);
+    // const password:string = data.get('password')?.toString() || '';
+    // console.log(password);
+
+    // const privateKey:string = localStorage.getItem('privateKey') || '';
+
+    // const payload = {
+    //   email: data.get('email'),
+    //   password: password,
+    // };
+
+    const baseUrl = 'https://fyp21050-server.herokuapp.com'
+
+
+    const payload = {
+        username: username,
+        walletAddress: address
     }
-  }
-  
+    // Register
+    const res : AxiosResponse<any> = await axios.post(baseUrl+'/register', payload)
+    console.log('result',res.data.user.privateKey)
+
+    if (res.data.success === true){
+      localStorage.setItem('privateKey', res.data.user.privateKey);
+      navigate('/account') 
+    }
+
+    // submitLogin({
+    //   variables: {
+    //     input: payload,
+    //   },
+    // })
+    //   .then((res) => {
+    //     const { status, token, message, user } = res.data.login;
+    //     if (status === 'success') {
+    //       props.login(user)
+    //       localStorage.setItem('token', token);
+    //       navigate(`/user/${user.id}`);
+    //     } else {
+    //       setMessage(message);
+    //     }
+    //   })
+    //   .catch((err) => {
+    //     console.error(err);
+    //     if (error) setMessage(error.message);
+    //   });
+  };
+
   return (
     <Container component="main" maxWidth="xs">
       <Box
@@ -196,66 +121,49 @@ const Register = () => {
           alignItems: 'center',
         }}
       >
-        {/* <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
+        <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
           <LockOutlinedIcon />
         </Avatar>
         <Typography component="h1" variant="h5">
-          Register
+          Create your Algol Account
         </Typography>
         {message && (
           <Typography variant="body1" color="red" sx={{ mt: 2 }}>
             {message}
           </Typography>
-        )} */}
-        <Box component="form" onSubmit={connectWalletHandler} noValidate sx={{ mt: 1 }}>
-          {/* <TextField
+        )}
+        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+        {/* <Box component="form"  noValidate sx={{ mt: 1 }}> */}
+          <TextField
+            // error={username===''}
             margin="normal"
             required
             fullWidth
-            name="password"
-            label="Password"
-            type="password"
-            id="password"
-            autoComplete="current-password"
+            id="username"
+            label="Username"
+            name="username"
+            autoComplete="username"
+            autoFocus
+            value={username}
+            onChange={(e)=> setUsername(e.target.value)}
           />
           <TextField
+            // error={address === ''}
             margin="normal"
             required
             fullWidth
-            name="confirm-password"
-            label="Confirm Password"
-            type="password"
-            id="confirm-password"
-            autoComplete="current-password"
+            name="address"
+            label="Wallet Address"
+            type="address"
+            id="address"
+            autoComplete="address"
+            value={address}
+            onChange={(e)=> setAddress(e.target.value)}
+          />
+          {/* <FormControlLabel
+            control={<Checkbox value="remember" color="primary" />}
+            label="Remember me"
           /> */}
-          <Typography>Address: {defaultAccount}</Typography>
-          <Typography>Balance: {userBalance}</Typography>
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3, mb: 2 }}
-            disabled={loading}
-            // onSubmit={}
-          >
-            {connButtonText}
-          </Button>
-          {/* <Grid container>
-            <Grid item xs>
-              <Link href="#" variant="body2">
-                Forgot password?
-              </Link>
-            </Grid>
-            <Grid item>
-              <Link href="/login" variant="body2">
-                {'Already have an account? Login'}
-              </Link>
-            </Grid>
-          </Grid> */}
-        </Box>
-        <Box component="form" onSubmit={handleSubmitFile} noValidate sx={{ mt: 1 }}>
-          <Typography>Upload New File</Typography>
-          <input type="file" name="file" placeholder='upload file' onChange={onFileUpload}/>
           <Button
             type="submit"
             fullWidth
@@ -263,37 +171,18 @@ const Register = () => {
             sx={{ mt: 3, mb: 2 }}
             disabled={loading}
           >
-            Submit File
+            Create
           </Button>
-
-          <Typography>Your uploaded files</Typography>
-          {/* <Typography>1</Typography>
-          <Typography>2</Typography>
-          <Typography>3</Typography>
-          <Typography>4</Typography> */}
           
-          {/* {showTokens()}
-          {showTokens} */}
-          <Typography>{showToken}</Typography>
-          {/* <ListItem component={showTokens}>
-            <ListItemText primary="Text" />
-          </ListItem> */}
-          {/* {tokens.length != 0 ? 
-            <>
-              {tokens.forEach((t:any)=>{
-                console.log('tokensz',t)
-                  return(
-                    <Typography > {t.name}</Typography>
-                  )
-                })} 
-            </>
-          : <></>
-      } */}
-    
         </Box>
       </Box>
     </Container>
   );
 };
 
-export default Register;
+const mapDispatchToProps = (dispatch:any)=> ({
+  login: (userData:User) => dispatch(login(userData)),
+  // logout: () => dispatch(logout())
+});
+
+export default connect(null, mapDispatchToProps)(Login);

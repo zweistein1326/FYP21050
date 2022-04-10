@@ -19,45 +19,55 @@ import {connect} from 'react-redux';
 import { login } from '../actions/auth';
 import { User } from '../models/User';
 import { privateEncrypt } from 'crypto';
+import axios, { AxiosResponse } from 'axios';
 
 
 const Login = (props:any) => {
   const navigate = useNavigate();
   const [message, setMessage] = useState<string>('');
   const [submitLogin, { loading, error }] = useMutation(LOGIN);
+  const [username, setUsername] = useState<string>('');
+  // const [privateKey, setPrivateKey] = useState<string>('');
+  const [address, setAddress] = useState<string>('');
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const password:string = data.get('password')?.toString() || '';
-    console.log(password);
+    // const data = new FormData(event.currentTarget);
+    // const password:string = data.get('password')?.toString() || '';
+    // console.log(password);
 
     const privateKey:string = localStorage.getItem('privateKey') || '';
-
+    console.log('private key', privateKey)
     const payload = {
-      email: data.get('email'),
-      password: password,
+      username: username,
+      walletAddress: address,
+      privateKey: privateKey
     };
 
-    submitLogin({
-      variables: {
-        input: payload,
-      },
-    })
-      .then((res) => {
-        const { status, token, message, user } = res.data.login;
-        if (status === 'success') {
-          props.login(user)
-          localStorage.setItem('token', token);
-          navigate(`/user/${user.id}`);
-        } else {
-          setMessage(message);
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        if (error) setMessage(error.message);
-      });
+    const baseUrl = 'https://fyp21050-server.herokuapp.com'
+    // login
+    const res : AxiosResponse<any> = await axios.post(baseUrl+'/login', payload)
+    console.log('result',res)
+
+  //   submitLogin({
+  //     variables: {
+  //       input: payload,
+  //     },
+  //   })
+  //     .then((res) => {
+  //       const { status, token, message, user } = res.data.login;
+  //       if (status === 'success') {
+  //         props.login(user)
+  //         localStorage.setItem('token', token);
+  //         navigate(`/user/${user.id}`);
+  //       } else {
+  //         setMessage(message);
+  //       }
+  //     })
+  //     .catch((err) => {
+  //       console.error(err);
+  //       if (error) setMessage(error.message);
+  //     });
   };
 
   return (
@@ -86,26 +96,38 @@ const Login = (props:any) => {
             margin="normal"
             required
             fullWidth
-            id="email"
-            label="Email Address"
-            name="email"
-            autoComplete="email"
+            id="username"
+            label="Username"
+            name="username"
+            autoComplete="username"
             autoFocus
+            value={username}
+            onChange={(e)=> setUsername(e.target.value)}
           />
+          {/* <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="privateKey"
+            label="Private Key"
+            type="privateKey"
+            id="privateKey"
+            autoComplete="privateKey"
+          /> */}
           <TextField
             margin="normal"
             required
             fullWidth
-            name="password"
-            label="Password"
-            type="password"
-            id="password"
-            autoComplete="current-password"
+            name="address"
+            label="Wallet Address"
+            type="address"
+            id="address"
+            autoComplete="address"
           />
-          <FormControlLabel
+          {/* <FormControlLabel
             control={<Checkbox value="remember" color="primary" />}
             label="Remember me"
-          />
+          /> */}
           <Button
             type="submit"
             fullWidth
@@ -116,15 +138,17 @@ const Login = (props:any) => {
             Sign In
           </Button>
           <Grid container>
-            <Grid item xs>
+            {/* <Grid item xs>
               <Link href="#" variant="body2">
                 Forgot password?
               </Link>
-            </Grid>
+            </Grid> */}
             <Grid item>
-              <Link href="/register" variant="body2">
+              <Grid item>
+                <Link href="/register" variant="body2">
                 {"Don't have an account? Sign Up"}
-              </Link>
+                </Link>
+              </Grid>
             </Grid>
           </Grid>
         </Box>

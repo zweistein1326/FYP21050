@@ -27,7 +27,8 @@ const setDefaultAccount = async () => {
 var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545/'));
 setDefaultAccount();
 var credentialHashDeployedContract = new web3.eth.Contract(credentialHashContract.abi, credentialHashContract.networks[5777].address);
-var uniqueAssetDeployedContract = new web3.eth.Contract(uniqueAssetContract.abi, '0x749ca7700F207C59ceD366dCb61E93a2b687fc4D');
+var uniqueAssetDeployedContract = new web3.eth.Contract(uniqueAssetContract.abi, uniqueAssetContract.networks[5777].address);
+
 
 
 
@@ -93,13 +94,13 @@ router.post('/upload', async (req, res, next) => {
                 console.log({ recepientAddress, assetHash, metadataUrl });
                 // console.log(web3.eth.defaultAccount, 'check default account');
                 const tokenId = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).call({ from: recepientAddress, gas: '1000000' })
-                const token = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).send({ from: recepientAddress, gas: '1000000' });
+                await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).send({ from: recepientAddress, gas: '1000000' });
                 // console.log(tokenId.toNumber())
                 // const tokenId = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).call({ from: recepientAddress, gas: '1000000' })
 
                 // const owner = await uniqueAssetDeployedContract.methods.ownerOf(tokenId).call({ from: recepientAddress, gas: '1000000' });
 
-                // console.log(tokenId)
+                console.log(tokenId)
                 // console.log(token);
 
                 if (process.platform === "darwin") {
@@ -124,16 +125,19 @@ router.post('/upload', async (req, res, next) => {
                 // console.log(tokenId);
             }
             catch (e) {
-                console.log(e.message);
+                console.log(e);
             }
 
 
 
             // addFileToUser('10', fileObj);
             // Send TokenID
+            console.log('file sent',fileSend)
             return res.json(fileSend);
+
         })
     }
+    
     // return res.json('Uploaded');
 })
 

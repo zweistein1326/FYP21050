@@ -10,6 +10,7 @@ import AddCredential from './pages/AddCredential';
 import { Provider } from 'react-redux';
 import configureStore from './store/configureStore';
 import RequestCredential from './pages/RequestCredential';
+import Account from './pages/Account'
 
 
 declare var window: any;
@@ -50,11 +51,12 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/register" element={<Register />}/>
           <Route path="/user/:id" element={<Home />} />
           <Route path="/user/:id/:credentialId" element={<CredentialPage />} />
           <Route path="/addCredential" element={<AddCredential />} />
           <Route path="/requestCredential" element={<RequestCredential />} />
+          <Route path="/account" element={<Account />} />
         </Routes>
       </Router>
       </Provider>

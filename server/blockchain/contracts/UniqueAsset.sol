@@ -8,6 +8,7 @@ contract UniqueAsset is ERC721{
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
     mapping(uint256 => string) public tokenURIs;
+    // string ownerHistory = []
     
 
     constructor() public ERC721("UniqueAsset","UNA"){}

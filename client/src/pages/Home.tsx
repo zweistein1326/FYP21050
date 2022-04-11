@@ -1,17 +1,19 @@
 import { useMutation } from '@apollo/client';
 import { Box, Button, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { connect } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Link, useParams } from 'react-router-dom';
 import CredentialTile from '../components/CredentialTile';
 import Header from '../components/Header';
 import { GETUSERBYID } from '../graphql';
 import { User } from '../models/User';
+import { AppState } from '../store/configureStore'
 
 declare var window:any;
 
 const Home = (props:any) => {
+
   const navigate = useNavigate();
   const [loggedIn, setLoggedIn] = useState(
     props.auth.user !==null ,
@@ -20,6 +22,7 @@ const Home = (props:any) => {
   const [activeCredentials,setActiveCredentials] = useState<any>([]);
   const [fetchInfo,{loading,error}] = useMutation(GETUSERBYID);
   const [account, setAccount] = useState<any>(null);
+  
   
   const handleLogout = () => {
     localStorage.removeItem('token');

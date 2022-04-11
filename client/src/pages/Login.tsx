@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import React from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   Avatar,
   Button,
@@ -10,31 +11,68 @@ import {
   Link,
   Grid,
   Typography,
+  Alert,
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useMutation } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
 import { LOGIN } from '../graphql';
-import {connect} from 'react-redux';
+import {connect, useDispatch, useSelector} from 'react-redux';
 import { login } from '../actions/auth';
 import { User } from '../models/User';
 import { privateEncrypt } from 'crypto';
 import axios, { AxiosResponse } from 'axios';
 
+declare var window: any;
+const {ethereum} = window;
+
 
 const Login = (props:any) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [message, setMessage] = useState<string>('');
   const [submitLogin, { loading, error }] = useMutation(LOGIN);
-  const [username, setUsername] = useState<string>('');
+  const [username, setUsername] = useState<any>('');
   // const [privateKey, setPrivateKey] = useState<string>('');
   const [address, setAddress] = useState<string>('');
+  
+  const connectWalletHandler = async () => {
+    try{
+      const accounts = await ethereum.request({method: 'eth_requestAccounts'});
+      setAddress(accounts[0])      
+    } catch(err){
+      console.log(err);
+    }
+  }
+  useEffect(()=>{
+    connectWalletHandler();
+    // GetCookies();
+  },[])
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+
+
+  const HandleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     // const data = new FormData(event.currentTarget);
     // const password:string = data.get('password')?.toString() || '';
     // console.log(password);
+
+    const userTemp = 'user4'
+    const walletTemp= '0x0AC9Be48d8b52F707161c6001b3fb3d13d4B3214'
+    
+    // const onLogin =  (name: string) =>{
+    //   useCallback(()=>{
+    //     dispatch(login(name))
+    //   },[dispatch])
+    // }
+
+    // const onLogin = React.useCallback(
+    //   function(name:any) {
+    //     dispatch(login(name));
+    //   },
+    //   [dispatch]
+    // );
+
 
     const privateKey:string = localStorage.getItem('privateKey') || '';
     console.log('private key', privateKey)
@@ -44,11 +82,33 @@ const Login = (props:any) => {
       privateKey: privateKey
     };
 
+    const payloadStore = {
+      username: username,
+      publicKey: address,
+    }
+
     const baseUrl = 'https://fyp21050-server.herokuapp.com'
     // login
-    const res : AxiosResponse<any> = await axios.post(baseUrl+'/login', payload)
-    console.log('result',res)
+    try{
+      const res : AxiosResponse<any> = await axios.post(baseUrl+'/login', payload)
+      console.log('result',res)
+      var successTemp = true 
+      // if(res.data.success === true){
+      if(successTemp === true){
+        // onLogin(username)
+        console.log(username,'username')
+        dispatch(login(payloadStore))
+        console.log('checker')
+        navigate('/home',{state: {username, address}})
+      }else{
+        <Alert severity="error">Invalid Login.</Alert>
+      }
 
+    }
+    catch(e){
+      console.log(e)
+    }
+    
   //   submitLogin({
   //     variables: {
   //       input: payload,
@@ -91,7 +151,7 @@ const Login = (props:any) => {
             {message}
           </Typography>
         )}
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+        <Box component="form" onSubmit={HandleSubmit} noValidate sx={{ mt: 1 }}>
           <TextField
             margin="normal"
             required
@@ -102,7 +162,7 @@ const Login = (props:any) => {
             autoComplete="username"
             autoFocus
             value={username}
-            onChange={(e)=> setUsername(e.target.value)}
+            onChange={(e:any)=> setUsername(e.target.value)}
           />
           {/* <TextField
             margin="normal"
@@ -137,6 +197,7 @@ const Login = (props:any) => {
           >
             Sign In
           </Button>
+          <Typography >The address for the connected Metamask Wallet is {address}</Typography>
           <Grid container>
             {/* <Grid item xs>
               <Link href="#" variant="body2">
@@ -158,8 +219,9 @@ const Login = (props:any) => {
 };
 
 const mapDispatchToProps = (dispatch:any)=> ({
-  login: (userData:User) => dispatch(login(userData)),
+  login: (userData:any) => dispatch(login(userData)),
   // logout: () => dispatch(logout())
 });
 
 export default connect(null, mapDispatchToProps)(Login);
+// export default Login;

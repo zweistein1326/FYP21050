@@ -1,14 +1,18 @@
 import { AnyARecord } from "dns";
 import { User } from "../models/User";
 
-export const login = (user:User) => ({
+export const login = ({username, publicKey}:User) => ({
     type: 'LOGIN',
-    user:user
+    payload: {
+        username,
+        publicKey,
+        signedIn: false
+    }
 })
 
 export const credentials = ({ username }:any) => ({
     type: 'CREDENTIALS',
-    username
+    payload:{username}
 })
 
 export const startLogin = () => {
@@ -17,9 +21,14 @@ export const startLogin = () => {
     }
 }
 
+// export const address = ({ username }:any) => ({
+//     type: 'CREDENTIALS',
+//     payload:{username}
+// })
 export const logout = () => ({
     type: 'LOGOUT',
 })
+
 
 // export const startLogout = () => {
 //     return (dispatch) => {

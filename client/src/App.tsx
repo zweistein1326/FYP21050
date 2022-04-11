@@ -11,6 +11,12 @@ import { Provider } from 'react-redux';
 import configureStore from './store/configureStore';
 import RequestCredential from './pages/RequestCredential';
 import Account from './pages/Account'
+import DashboardPage from './pages/Sidebar/Home'
+import UploadPage from './pages/Sidebar/upload'
+import RevokePage from './pages/Sidebar/Revoke'
+import { CookiesProvider } from 'react-cookie';
+import { useCookies } from 'react-cookie';
+// import {use}
 
 
 declare var window: any;
@@ -27,12 +33,20 @@ const {ethereum} = window;
 const connectWalletHandler = async () => {
   try{
     const accounts = await ethereum.request({method: 'eth_requestAccounts'});
+
     console.log('account', accounts[0]);
     console.log("Wallet exists! We're ready to go!");
+
   } catch(err){
     console.log(err);
   }
 }
+
+// const GetCookies =()=>{
+//   const [cookies, setCookie] = useCookies(['user']);
+//   // setCookie('user', , {path: '/'})
+
+// }
 
 export const store = configureStore();
 const auth = store.getState().auth
@@ -42,9 +56,11 @@ function App() {
 
   useEffect(()=>{
     connectWalletHandler();
+    // GetCookies();
   },[])
 
   return (
+    <CookiesProvider>
     <ApolloProvider client={client}>
       <Provider store={store}>
       <Router>
@@ -52,15 +68,20 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />}/>
-          <Route path="/user/:id" element={<Home />} />
+          {/* <Route path="/user/:id" element={<Home />} />
           <Route path="/user/:id/:credentialId" element={<CredentialPage />} />
           <Route path="/addCredential" element={<AddCredential />} />
           <Route path="/requestCredential" element={<RequestCredential />} />
-          <Route path="/account" element={<Account />} />
+          <Route path="/account" element={<DashboardPage />} /> */}
+          <Route path="/home" element={<DashboardPage />} />
+          <Route path="/upload" element={<UploadPage />} />
+          <Route path="/revoke" element={<RevokePage />} />
+
         </Routes>
       </Router>
       </Provider>
     </ApolloProvider>
+    </CookiesProvider>
   );
 }
 

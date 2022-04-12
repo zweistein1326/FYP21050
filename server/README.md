@@ -1,11 +1,11 @@
+# START BLOCKCHAIN
+1. cd ./server/blockchain
+2. npm install
+3. truffle compile
+4. truffle migrate --reset
+
 # START SERVER
-
-# Start the Blockchain
-
-## 1. cd ./server/blockchain
-## 2. truffle compile
-## 3. truffle migrate --reset
-
 ## Open new terminal
-## 4. cd ./server
-## 5. npm run dev
+4. cd ./server
+5. npm install
+6. npm run dev

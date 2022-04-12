@@ -1,18 +1,10 @@
 const fs = require('fs');
-const rsa = require('js-crypto-rsa');
 const router = require('express').Router();
 const {addFile, encrypt, decrypt} = require('./helperFunctions')
 const usersContract = require('../../blockchain/build/contracts/Users.json');
 const Web3 = require('web3');
-const ipfsClient = require('ipfs-http-client');
-const e = require('express');
-const ipfs = ipfsClient.create({
-    host: "ipfs.infura.io",
-    port: 5001,
-    protocol: "https"
-});
 
-var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545/')); // replace with Infura ID
+var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545/'));
 var usersDeployedContract = new web3.eth.Contract(usersContract.abi, usersContract.networks[5777].address);
 
 const setDefaultAccount = async () => {
@@ -23,7 +15,6 @@ const setDefaultAccount = async () => {
 }
 
 setDefaultAccount()
-// const { Blockchain, Users, User, Credential, Credentials } = require('../../ssidBlockchain');
 
 /* --------------------------API Endpoints-------------------------- */
 
@@ -37,7 +28,8 @@ router.post('/register', async (req, res, next) => {
     const {username, walletAddress, publicKey} = req.body;
     
     try{
-        await usersDeployedContract.methods.createNewUser(username, publicKey).send({from: web3.eth.defaultAccount, gas:1000000});
+        const tx = await usersDeployedContract.methods.createNewUser(username, publicKey).send({from: web3.eth.defaultAccount, gas:1000000});
+        web3.eth.accounts.signTransaction(tx);
         const user = await usersDeployedContract.methods.getUserByUsername(username).call({from: web3.eth.defaultAccount, gas:1000000});
         const returnUser = {id:user.id, username:user.username, publicKey:user.publicKey, credentialIds:user.credentialIds}
         return res.status(200).json({user: returnUser, success: true})
@@ -114,7 +106,6 @@ router.post('/upload', async (req, res, next) => {
                 });
                 const assetHash = fileHash.toString();
                 const metadataUrl = `https://ipfs.io/ipfs/${assetHash}`
-                console.log(assetHash, metadataUrl)
                 try {
                     // const user = await usersDeployedContract.methods.getUserById(senderAddress).call({from: web3.eth.defaultAccount, gas:'100000'});
         
@@ -123,7 +114,7 @@ router.post('/upload', async (req, res, next) => {
 
                     // fileSend = { name: fileName, encryptedMetadataUrl, encryptedAssetHash }
 
-                    await usersDeployedContract.methods.addCredential(senderAddress, {fileName, assetHash,metadataUrl}, Date.now().toString(), []).send({from: web3.eth.defaultAccount, gas:1000000}); // Add credential to list of all credentials
+                    const tx = await usersDeployedContract.methods.addCredential(senderAddress, {fileName, assetHash,metadataUrl}, Date.now().toString(), []).send({from: web3.eth.defaultAccount, gas:1000000}); // Add credential to list of all credentials
                     const credentialId = await usersDeployedContract.methods.addCredential(senderAddress, {fileName, assetHash, metadataUrl}, Date.now().toString(), []).call({from: web3.eth.defaultAccount, gas:1000000}) - 1 ; // Add credential to list of all credentials
                     const credential =  await usersDeployedContract.methods.getCredentialById(credentialId).call({from: web3.eth.defaultAccount, gas:'1000000'}); // Add credential to list of all credentials
                     const newCredential = {id:credential.id, createdBy:credential.createdBy, data:credential.data, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers}

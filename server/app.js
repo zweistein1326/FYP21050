@@ -2,7 +2,6 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
-const { getAllUsers } = require('./database');
 const cors = require('cors');
 if (process.env.NODE_ENV !== "production") {
     require('dotenv').config()

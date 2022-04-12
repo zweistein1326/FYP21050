@@ -7,7 +7,7 @@ contract Users{
     struct User{
         uint id;
         string username;
-        string publickKey;
+        string publicKey;
         uint256[] credentialIds;
     }
 
@@ -75,11 +75,12 @@ contract Users{
     
     // * Credential functions
     // * Add credential to credential List and user Credentials
-    function addCredential(uint256 createdBy, CredentialData memory data, string memory createdAt, uint256[] memory viewers) public{
+    function addCredential(uint256 createdBy, CredentialData memory data, string memory createdAt, uint256[] memory viewers) public returns (uint256){
         _credentialIds.increment();
         uint256 newItemId = _credentialIds.current();
         credentials[newItemId] = Credential(newItemId, createdBy, data, createdBy, true, '', createdAt, viewers );
         addCredentialToUser(createdBy, newItemId);
+        return newItemId;
     }
 
     function getCredentialById(uint256 id) public view returns (Credential memory){

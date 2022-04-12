@@ -29,7 +29,7 @@ router.post('/register', async (req, res, next) => {
     
     try{
         const tx = await usersDeployedContract.methods.createNewUser(username, publicKey).send({from: web3.eth.defaultAccount, gas:1000000});
-        web3.eth.accounts.signTransaction(tx);
+        // web3.eth.accounts.signTransaction(tx);
         const user = await usersDeployedContract.methods.getUserByUsername(username).call({from: web3.eth.defaultAccount, gas:1000000});
         const returnUser = {id:user.id, username:user.username, publicKey:user.publicKey, credentialIds:user.credentialIds}
         return res.status(200).json({user: returnUser, success: true})
@@ -154,23 +154,19 @@ router.post('/transfer', async (req, res, next) => {
     
     try {
         const originalCredential = await usersDeployedContract.methods.getCredentialById(credentialId).call({from: web3.eth.defaultAccount, gas:'100000'});
-        const fromUser = await usersDeployedContract.methods.getUserById(fromAddress);
-        const toUser = await usersDeployedContract.methods.getUserById(toAddress);
+        const fromUser = await usersDeployedContract.methods.getUserById(fromAddress).call({from: web3.eth.defaultAccount, gas:'100000'});
+        const toUser = await usersDeployedContract.methods.getUserById(toAddress).call({from: web3.eth.defaultAccount, gas:'100000'});
         
-        if(credential){
-            if(toUser.id!==""){
-                await usersDeployedContract.methods.transferCredential(originalCredential.id, fromAddress, toAddress).send({from: web3.eth.defaultAccount, gas:'100000'});
-                const credential = await usersDeployedContract.methods.getCredentialById(originalCredential.id).call({from: web3.eth.defaultAccount, gas:'100000'});
-                const newCredential = {id:credential.id, createdBy:credential.createdBy, data:credential.data, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers}
-                return res.status(200).json({credential: newCredential, success:'true'})
-            }
-            else{
-                return res.status(200).json({message:`User does not exist`, success:false})
-            }
+        if(toUser.id!==""){
+            await usersDeployedContract.methods.transferCredential(originalCredential.id, fromAddress, toAddress).send({from: web3.eth.defaultAccount, gas:'100000'});
+            const credential = await usersDeployedContract.methods.getCredentialById(originalCredential.id).call({from: web3.eth.defaultAccount, gas:'100000'});
+            const newCredential = {id:credential.id, createdBy:credential.createdBy, data:credential.data, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers}
+            return res.status(200).json({credential: newCredential, success:'true'})
         }
         else{
-            return res.status(200).json({message:`credential does not exist`, success:false})
+            return res.status(200).json({message:`User does not exist`, success:false})
         }
+        
     }
     catch (e) {
         return res.status(200).json({message: e.message, success:false})

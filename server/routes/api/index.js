@@ -10,8 +10,6 @@ var usersDeployedContract = new web3.eth.Contract(usersContract.abi, usersContra
 const setDefaultAccount = async () => {
     var account = await web3.eth.getAccounts();
     web3.eth.defaultAccount = account[0];
-    const balance = await web3.eth.getBalance(web3.eth.defaultAccount)
-    console.log(balance)
 }
 
 setDefaultAccount()
@@ -28,7 +26,7 @@ router.post('/register', async (req, res, next) => {
     const {username, walletAddress, publicKey} = req.body;
     
     try{
-        const tx = await usersDeployedContract.methods.createNewUser(username, publicKey).send({from: web3.eth.defaultAccount, gas:1000000});
+        const tx = await usersDeployedContract.methods.createNewUser(username, publicKey).send({from: walletAddress, gas:1000000});
         // web3.eth.accounts.signTransaction(tx);
         const user = await usersDeployedContract.methods.getUserByUsername(username).call({from: web3.eth.defaultAccount, gas:1000000});
         const returnUser = {id:user.id, username:user.username, publicKey:user.publicKey, credentialIds:user.credentialIds}
@@ -114,7 +112,7 @@ router.post('/upload', async (req, res, next) => {
 
                     // fileSend = { name: fileName, encryptedMetadataUrl, encryptedAssetHash }
 
-                    const tx = await usersDeployedContract.methods.addCredential(senderAddress, {fileName, assetHash,metadataUrl}, Date.now().toString(), []).send({from: web3.eth.defaultAccount, gas:1000000}); // Add credential to list of all credentials
+                    const tx = await usersDeployedContract.methods.addCredential(senderAddress, {fileName, assetHash,metadataUrl}, Date.now().toString(), []).send({from: walletAddress, gas:1000000}); // Add credential to list of all credentials
                     const credentialId = await usersDeployedContract.methods.addCredential(senderAddress, {fileName, assetHash, metadataUrl}, Date.now().toString(), []).call({from: web3.eth.defaultAccount, gas:1000000}) - 1 ; // Add credential to list of all credentials
                     const credential =  await usersDeployedContract.methods.getCredentialById(credentialId).call({from: web3.eth.defaultAccount, gas:'1000000'}); // Add credential to list of all credentials
                     const newCredential = {id:credential.id, createdBy:credential.createdBy, data:credential.data, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers}
@@ -158,7 +156,7 @@ router.post('/transfer', async (req, res, next) => {
         const toUser = await usersDeployedContract.methods.getUserById(toAddress).call({from: web3.eth.defaultAccount, gas:'100000'});
         
         if(toUser.id!==""){
-            await usersDeployedContract.methods.transferCredential(originalCredential.id, fromAddress, toAddress).send({from: web3.eth.defaultAccount, gas:'100000'});
+            await usersDeployedContract.methods.transferCredential(originalCredential.id, fromAddress, toAddress).send({from: walletAddress, gas:'100000'});
             const credential = await usersDeployedContract.methods.getCredentialById(originalCredential.id).call({from: web3.eth.defaultAccount, gas:'100000'});
             const newCredential = {id:credential.id, createdBy:credential.createdBy, data:credential.data, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers}
             return res.status(200).json({credential: newCredential, success:'true'})
@@ -178,7 +176,7 @@ router.post('/revoke', async(req,res,next)=>{
     const {credentialId, senderAddress, reason, walletAddress} = req.body;
 
     try{
-        await usersDeployedContract.methods.revokeCredential(credentialId, senderAddress, reason).send({from: web3.eth.defaultAccount, gas:'100000'});
+        await usersDeployedContract.methods.revokeCredential(credentialId, senderAddress, reason).send({from: walletAddress, gas:'100000'});
         const credential = await usersDeployedContract.methods.getCredentialById(credentialId).call({from:web3.eth.defaultAccount, gas:'100000'});
         const newCredential = {id:credential.id, createdBy:credential.createdBy, data:credential.data, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers}
         return res.status(200).json({credential: newCredential, success:true})
@@ -192,7 +190,7 @@ router.post('/revoke', async(req,res,next)=>{
 router.post('/addViewer', async(req,res,next)=>{
     const {credentialId, viewerId, senderId, walletAddress} = req.body;
     try{
-        await usersDeployedContract.methods.addViewerToCredential(credentialId, senderId, viewerId).send({from: web3.eth.defaultAccount, gas:'100000'});
+        await usersDeployedContract.methods.addViewerToCredential(credentialId, senderId, viewerId).send({from: walletAddress, gas:'100000'});
         const credential = await usersDeployedContract.methods.getCredentialById(credentialId).call({from:web3.eth.defaultAccount, gas:'100000'});
         const newCredential = {id:credential.id, createdBy:credential.createdBy, data:credential.data, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers}
         return res.json({credential: newCredential, success:true});

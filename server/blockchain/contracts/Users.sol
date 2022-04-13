@@ -7,7 +7,7 @@ contract Users{
     struct User{
         uint id;
         string username;
-        string publicKey;
+        address walletAddress;
         uint256[] credentialIds;
     }
 
@@ -37,10 +37,10 @@ contract Users{
     
 
     // * User functions
-    function createNewUser(string memory username, string memory publicKey) public {
+    function createNewUser(string memory username, address walletAddress) public {
         userCount++;
         uint256[] memory credentialIds;
-        users[userCount] = User(userCount, username, publicKey, credentialIds);
+        users[userCount] = User(userCount, username, walletAddress, credentialIds);
     }
 
     function addCredentialToUser(uint id, uint256 credentialId) public {

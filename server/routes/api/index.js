@@ -23,10 +23,10 @@ router.get('/', async(req,res,next)=>{
 // * Register
 router.post('/register', async (req, res, next) => {
     
-    const {username, walletAddress, publicKey} = req.body;
+    const {username, walletAddress} = req.body;
     
     try{
-        const tx = await usersDeployedContract.methods.createNewUser(username, publicKey).send({from: walletAddress, gas:1000000});
+        const tx = await usersDeployedContract.methods.createNewUser(username, walletAddress).send({from: walletAddress, gas:1000000});
         // web3.eth.accounts.signTransaction(tx);
         const user = await usersDeployedContract.methods.getUserByUsername(username).call({from: web3.eth.defaultAccount, gas:1000000});
         const returnUser = {id:user.id, username:user.username, publicKey:user.publicKey, credentialIds:user.credentialIds}
@@ -39,11 +39,11 @@ router.post('/register', async (req, res, next) => {
 
 // * Login
 router.post('/login', async (req, res, next) => {
-    const {username, walletAddress, messageHash} = req.body;
+    const {username, walletAddress} = req.body;
     try{
         const user = await usersDeployedContract.methods.getUserByUsername(username).call({from: web3.eth.defaultAccount, gas:'100000'});
-        if(web3.eth.accounts.recover(messageHash)===user.walletAddress){
-            const returnUser = {id:user.id, username:user.username, publicKey:user.publicKey, credentialIds:user.credentialIds}
+        if(user.walletAddress == walletAddress){
+            const returnUser = {id:user.id, username:user.username, walletAddress:user.walletAddress, credentialIds:user.credentialIds}
             return res.status(200).json({user: returnUser, success:true});
         }
         return res.status(200).json({message:'Login Failed',success:false});

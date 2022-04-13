@@ -64,7 +64,7 @@ router.get('/getFilesByUser',async(req,res,next)=>{
         if(user.credentialIds.length>0){
             user.credentialIds.forEach(async(credentialId,index)=>{
                 const credential = await usersDeployedContract.methods.getCredentialById(credentialId).call({from:web3.eth.defaultAccount, gas:'100000'});
-                const newCredential = {id:credential.id, createdBy:credential.createdBy, data:credential.data, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers}
+                const newCredential = {id:credential.id, createdBy:credential.createdBy, data:{fileName:credential.data[0], assetHash:credential.data[1], metadataUrl:credential.data[2]}, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers}
                 userCredentials.push(newCredential);
                 if(index == user.credentialIds.length-1)
                 {
@@ -115,7 +115,7 @@ router.post('/upload', async (req, res, next) => {
                     const tx = await usersDeployedContract.methods.addCredential(senderAddress, {fileName, assetHash,metadataUrl}, Date.now().toString(), []).send({from: walletAddress, gas:1000000}); // Add credential to list of all credentials
                     const credentialId = await usersDeployedContract.methods.addCredential(senderAddress, {fileName, assetHash, metadataUrl}, Date.now().toString(), []).call({from: web3.eth.defaultAccount, gas:1000000}) - 1 ; // Add credential to list of all credentials
                     const credential =  await usersDeployedContract.methods.getCredentialById(credentialId).call({from: web3.eth.defaultAccount, gas:'1000000'}); // Add credential to list of all credentials
-                    const newCredential = {id:credential.id, createdBy:credential.createdBy, data:credential.data, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers}
+                    const newCredential = {id:credential.id, createdBy:credential.createdBy, data:{fileName:credential.data[0], assetHash:credential.data[1], metadataUrl:credential.data[2]}, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers}
                     return res.json({credential:newCredential, success:true});
                 }
                 catch (e) {
@@ -138,7 +138,7 @@ router.get('/getCredential', async(req, res, next)=> {
     const {credentialId} = req.query;
     try{
         const credential = await usersDeployedContract.methods.getCredentialById(credentialId).call({from: web3.eth.defaultAccount, gas:'100000'});
-        const newCredential = {id:credential.id, createdBy:credential.createdBy, data:credential.data, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers}
+        const newCredential = {id:credential.id, createdBy:credential.createdBy, data:{fileName:credential.data[0], assetHash:credential.data[1], metadataUrl:credential.data[2]}, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers}
         return res.status(200).json({credential: newCredential, success:true})
     }
     catch(e){
@@ -158,7 +158,7 @@ router.post('/transfer', async (req, res, next) => {
         if(toUser.id!==""){
             await usersDeployedContract.methods.transferCredential(originalCredential.id, fromAddress, toAddress).send({from: walletAddress, gas:'100000'});
             const credential = await usersDeployedContract.methods.getCredentialById(originalCredential.id).call({from: web3.eth.defaultAccount, gas:'100000'});
-            const newCredential = {id:credential.id, createdBy:credential.createdBy, data:credential.data, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers}
+            const newCredential = {id:credential.id, createdBy:credential.createdBy, data:{fileName:credential.data[0], assetHash:credential.data[1], metadataUrl:credential.data[2]}, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers}
             return res.status(200).json({credential: newCredential, success:'true'})
         }
         else{
@@ -178,7 +178,7 @@ router.post('/revoke', async(req,res,next)=>{
     try{
         await usersDeployedContract.methods.revokeCredential(credentialId, senderAddress, reason).send({from: walletAddress, gas:'100000'});
         const credential = await usersDeployedContract.methods.getCredentialById(credentialId).call({from:web3.eth.defaultAccount, gas:'100000'});
-        const newCredential = {id:credential.id, createdBy:credential.createdBy, data:credential.data, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers}
+        const newCredential = {id:credential.id, createdBy:credential.createdBy, data:{fileName:credential.data[0], assetHash:credential.data[1], metadataUrl:credential.data[2]}, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers}
         return res.status(200).json({credential: newCredential, success:true})
     }
     catch(e){
@@ -192,7 +192,7 @@ router.post('/addViewer', async(req,res,next)=>{
     try{
         await usersDeployedContract.methods.addViewerToCredential(credentialId, senderId, viewerId).send({from: walletAddress, gas:'100000'});
         const credential = await usersDeployedContract.methods.getCredentialById(credentialId).call({from:web3.eth.defaultAccount, gas:'100000'});
-        const newCredential = {id:credential.id, createdBy:credential.createdBy, data:credential.data, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers}
+        const newCredential = {id:credential.id, createdBy:credential.createdBy, data:{fileName:credential.data[0], assetHash:credential.data[1], metadataUrl:credential.data[2]}, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers}
         return res.json({credential: newCredential, success:true});
     }
     catch(e){

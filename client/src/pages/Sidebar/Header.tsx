@@ -15,8 +15,10 @@ import {AppBar, Toolbar, IconButton, Typography} from "@material-ui/core";
 
 const useStyles = makeStyles((theme: Theme) => ({
   appBar: {
-    background: theme.palette.primary.dark,
-    color: theme.palette.secondary.light,
+    // background: theme.palette.primary.dark,
+    // color: theme.palette.secondary.light,
+    color: "#C41E3A",
+    background: "#16161d"
   },
   icon: {
     padding: theme.spacing(1),
@@ -24,9 +26,10 @@ const useStyles = makeStyles((theme: Theme) => ({
   title: {
     margin: "auto",
     align: "center",
-    color: "white",
+    // color: "#ce2029",
+    color: "#e34234",
     fontFamily: "Consolas",
-    fontSize: "150%"
+    fontSize: "200%"
   },
 }));
 
@@ -44,7 +47,7 @@ const Header = () => {
           {isOpened ? <ChevronLeftIcon /> : <MenuIcon />}
         </IconButton>
         <Typography variant="h6" className={classes.title} align="center" >
-          ALGOL. 
+          <b>ALGOL.</b> 
         </Typography>
       </Toolbar>
     </AppBar>

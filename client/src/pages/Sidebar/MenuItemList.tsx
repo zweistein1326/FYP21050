@@ -9,7 +9,12 @@ import MenuItem from "./MenuItem";
 const useStyles = makeStyles(() => ({
   padding: {
     padding: 0,
+    textDecoration: 'none',
+    color: "white",
   },
+  textDecoration : {
+      textDecoration: "none"
+  }
 }));
 
 const MenuItemsList = () => {
@@ -26,9 +31,14 @@ const MenuItemsList = () => {
             literal={literal}
             route={route}
             key={route}
-            selected={pathname === route}
-          />
+            selected={pathname === route} 
+          >
+              {literal}
+          </MenuItem>
         ))}
+        {/* <Link to="first" style={{ textDecoration: 'none' }}>
+            <MenuItem style={{ paddingLeft: 13 }}>Team 1</MenuItem>
+        </Link> */}
       </List>
     </Grid>
   );

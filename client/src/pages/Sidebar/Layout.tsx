@@ -15,6 +15,11 @@ const useStyles = makeStyles(() => ({
     display: "flex",
     flexDirection: "column",
     minHeight: "100vh",
+    // background: "#343434",
+    background: "#dbd7d2",
+    padding: 'none',
+    width: '100%',
+    // height: '100vh'
   },
   container: {
     display: "flex",

@@ -60,6 +60,7 @@ function App() {
   },[])
 
   return (
+    // <div style={{background: 'blue', height:'100%', width:'100%'}}>
     <CookiesProvider>
     <ApolloProvider client={client}>
       <Provider store={store}>
@@ -82,6 +83,8 @@ function App() {
       </Provider>
     </ApolloProvider>
     </CookiesProvider>
+    // </div>
+
   );
 }
 

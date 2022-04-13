@@ -44,9 +44,47 @@ const Login = (props:any) => {
       console.log(err);
     }
   }
+
+  const checkKey=async()=>{
+    const retrievedString :any = localStorage.getItem('keyAccount') || '';
+    const key = JSON.parse(retrievedString);
+    // const privateKeyTemp = key.publicKey+''
+    console.log('check storage',key.privateKey, typeof(key.privateKey), typeof(username))
+  }
+
   useEffect(()=>{
+  //   const data = {
+  //     "user": {
+  //         "id": 1,
+  //         "username": "User6",
+  //         "publicKey": {
+  //             "kty": "RSA",
+  //             "n": "x1YebA-iHsw-BdhVbDZgmY4HL1MRNFfF2DUa6trlpRH3EgzlatDd_2i7G8_oYq9NUor2NPF3bwsfEJ9J3kaCWjkWmET_LlEuidjJThFNtiXtiTASqg_xmWB-NgwuNnfpviU6FkaY7ZcqROiMEU_MiL_Y9QUhbhqTHM2JT_Gau92-afLJzrj4bmiC8FcYTnJJCjWo8wXo_TaOSLLMfoXkK1eoIMZMMxitG4WLPYc5QxCHu8wgcZEiKXSrH2Rnps1oo5H67BJv5E-E3kxtcduM2fBZsQeadS-onGadoZA_plJ7BrgD48idtouWc0EhbCcuPr9DTB4s0ToKZprA73j9Vw",
+  //             "e": "AQAB"
+  //         },
+  //         "credentials": [],
+  //         "walletAddress": "0x0304842812a48720b2d6a474d66ff6b04c10fe0a",
+  //         "privateKey": {
+  //             "kty": "RSA",
+  //             "n": "x1YebA-iHsw-BdhVbDZgmY4HL1MRNFfF2DUa6trlpRH3EgzlatDd_2i7G8_oYq9NUor2NPF3bwsfEJ9J3kaCWjkWmET_LlEuidjJThFNtiXtiTASqg_xmWB-NgwuNnfpviU6FkaY7ZcqROiMEU_MiL_Y9QUhbhqTHM2JT_Gau92-afLJzrj4bmiC8FcYTnJJCjWo8wXo_TaOSLLMfoXkK1eoIMZMMxitG4WLPYc5QxCHu8wgcZEiKXSrH2Rnps1oo5H67BJv5E-E3kxtcduM2fBZsQeadS-onGadoZA_plJ7BrgD48idtouWc0EhbCcuPr9DTB4s0ToKZprA73j9Vw",
+  //             "e": "AQAB",
+  //             "d": "TEepVqLY4D46UdRKRCG-76QJHdQE1mnsPON9jHf9vyBT0uV6eVi6Sz3RtD_oZrM8vKSOuQ3aLXUtCxhZlSSYR1xnSBfHKvtH-toplqVKfrSe5Iuv6MI3KwFg6t_YY2GZ4fiu9M1JQkpBk6MFzq4h0AbSSFkRROgIedIxhJUpKFBy2aFFIuZXk4vOURKVg3QcK4oooNFiTVe77iUBKzb3tzYQOS3BVjCIxy42eKB6sZMLeT81B-3Ry3S1pg27D8J5WtQfEUbWC1zpPOwQ6mGXn-VeBaDb-kkoyEq2dH2nqvtQ06KmwdnRkEKFcHjKMSnRzc9bqMoFrjyZXQDo19myyQ",
+  //             "p": "5uOvZyvq1JWbPpVF4kzpYwXZDU28PjIvv794xszYK63tDx0HJs5Ev_wC8p2TjHJUckI58sFwIEVM5VkD_4sjH9xRPmArswAOpf4ap0t4dymq-NYwTbrHr-kgCu1SrMWvky6QZ4sIZ7-X4d_2VSv_4rGt3K7OV07v7JkUNspFzX0",
+  //             "q": "3QPzL3kXbUB8-WwDWmLRgpEKoL1TrgLkqLpQ_IkUvOh1AVM5cJWsV0laDfmD3cqksox1ZmadQkTG1rjgyc0m5jWSxFnyE0xSYYbARpmBOmacrQExVgai2_iaA4SZkHZC-ahJJjzrK8Qtg9AjYQTLnAhdm2hOaQyM8L1dKLRjfmM",
+  //             "dp": "yGlduRofzcLGbD452MKV2oQa8TdGbF43oCLc_QKVqORhXrr9mCt29YYUMO-iQUiEEGF310UcxIYixvjLRadKJ7-fLZtgkxE7pc246PnTaOvcIf4ZE39LEWAzlgiFuL4nNoQ2iAngk910QnWaZje49tbvaRy6soIsM5x0NVLB4Ck",
+  //             "dq": "DLUFbl1P84AZr11-c9vqn88nBUbdYMvZybmsnlhjUNksoP7f9pEkb4BQJS2LX10fSwS4W0LbF8xMglvu0Kty6Rl7br6dJG7m7aSJuYVp4Km1qFzBMWkARBVvBXTCP4QNJb1_NyuZedK1qzZ0UkesTTRN7Xl5yKBoGg9JI-X7MnE",
+  //             "qi": "WssJEVQaBx-u_YtDw-kjtZlhay1L1XvsVhvbaWP9PBKECBFjweB62feqWhvd8zsgjiFE0RM-IYozxCFMzEPjr2L0HT2NUIwo_yCHQOR2lby361726yn_4Y2Z5-m3JbKS960jIj4zzjDxh2hyYOU7LPHICg14m3gQ-1UkcKvkTWk"
+  //         }
+  //     },
+  //     "success": true
+  // }
+  
+    // localStorage.setItem('user', JSON.stringify(data));
+
+    // const user:any = localStorage.getItem('user') || '';
+    // console.log('private key', user['privateKey'])
     connectWalletHandler();
-    // GetCookies();
+    checkKey();
   },[])
 
 
@@ -74,12 +112,17 @@ const Login = (props:any) => {
     // );
 
 
-    const privateKey:string = localStorage.getItem('privateKey') || '';
-    console.log('private key', privateKey)
+    // const privateKey:any = localStorage.getItem('privateKey') || '';
+    // console.log('private key', privateKey)
+    // const payload = {
+    //   username: username,
+    //   walletAddress: address,
+    //   privateKey: privateKey
+    // };
+
     const payload = {
       username: username,
       walletAddress: address,
-      privateKey: privateKey
     };
 
     const payloadStore = {
@@ -87,16 +130,18 @@ const Login = (props:any) => {
       publicKey: address,
     }
 
-    const baseUrl = 'https://fyp21050-server.herokuapp.com'
+    const baseUrl = 'http://127.0.0.1:8000/'
     // login
     try{
-      const res : AxiosResponse<any> = await axios.post(baseUrl+'/login', payload)
-      console.log('result',res)
+      console.log(payload)
+      const res : AxiosResponse<any> = await axios.post(baseUrl+'login', payload)
+      console.log('result',res.data)
       var successTemp = true 
-      // if(res.data.success === true){
-      if(successTemp === true){
+      if(res.data.success === true){
+      // if(successTemp === true){
         // onLogin(username)
         console.log(username,'username')
+        localStorage.setItem('user', JSON.stringify(res.data));
         dispatch(login(payloadStore))
         console.log('checker')
         navigate('/home',{state: {username, address}})
@@ -197,7 +242,8 @@ const Login = (props:any) => {
           >
             Sign In
           </Button>
-          <Typography >The address for the connected Metamask Wallet is {address}</Typography>
+          <Typography >The address for the connected Metamask Wallet is <i>{address}</i></Typography>
+          <br></br>
           <Grid container>
             {/* <Grid item xs>
               <Link href="#" variant="body2">

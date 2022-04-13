@@ -22,6 +22,13 @@ import { login } from '../actions/auth';
 import { User } from '../models/User';
 import axios, { AxiosResponse } from 'axios';
 import { privateEncrypt } from 'crypto';
+import { useCookies } from 'react-cookie';
+// import Web3 from 'web3'
+
+// const Accounts = require('web3-eth-accounts');
+const Web3 = require('web3')
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:3000"))
+
 
 declare var window: any;
 const {ethereum} = window;
@@ -33,8 +40,15 @@ const Login = (props:any) => {
   const [submitLogin, { loading, error }] = useMutation(LOGIN);
   const [username, setUsername] = useState<string>('');
   const [address, setAddress] = useState<string>('')
+  const [cookies, setCookies] = useCookies<any>(['user'])
+  const [connectedAddress, setConnectedAddress] = useState<any>('')
   // const [privateKey, setPrivateKey] = useState<string>('');
-  // const []
+  
+  const tempAccount = async () =>{
+    console.log('check')
+    const tempAccount = await web3.eth.accounts.create([])
+    console.log('check account',tempAccount.address)
+  }
 
   // const accounts = await ethereum.request({method: 'eth_requestAccounts'});
   // console.log('account', accounts[0]);
@@ -42,25 +56,29 @@ const Login = (props:any) => {
     try{
       const accounts = await ethereum.request({method: 'eth_requestAccounts'});
       console.log('account', accounts[0]);
-      
+      setConnectedAddress(accounts[0])
       // console.log("Wallet exists! We're ready to go!");
     } catch(err){
       console.log(err);
     }
   }
 
+
   useEffect(()=>{
     connectWalletHandler();
+    tempAccount();
   },[])
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const baseUrl = 'https://fyp21050-server.herokuapp.com'
+    const baseUrl = 'http://127.0.0.1:8000/'
+    const keyAccount = await web3.eth.accounts.create([])
+    console.log('key account',keyAccount)
 
     const payload = {
         username: username,
-        walletAddress: address
+        walletAddress: address,
     }
 
     const payloadStore = {
@@ -68,14 +86,16 @@ const Login = (props:any) => {
       publicKey: address
     }
     // Register
-    const res : AxiosResponse<any> = await axios.post(baseUrl+'/register', payload)
-    console.log('result',res.data.user.privateKey)
+    const res : AxiosResponse<any> = await axios.post(baseUrl+'register', payload)
+    // console.log('result',res.data.user.privateKey)
+    console.log('result', res.data.user)
 
     if (res.data.success === true){
       dispatch(login(payloadStore))
-      localStorage.setItem('privateKey', res.data.user.privateKey);
-      console.log(localStorage.getItem('privateKey'))
-      navigate('/home', {state: payload}) 
+      localStorage.setItem('user', JSON.stringify(res.data));
+      localStorage.setItem('keyAccount',JSON.stringify(keyAccount))
+      setCookies('username', username, {path:'/'})
+      navigate('/login', {state: payload}) 
     }else{
       <Alert severity="error">Invalid Registeration.</Alert>
     }
@@ -102,7 +122,7 @@ const Login = (props:any) => {
   };
 
   return (
-    <Container component="main" maxWidth="xs">
+    <Container component="main" maxWidth="xs" >
       <Box
         sx={{
           marginTop: 8,
@@ -163,7 +183,7 @@ const Login = (props:any) => {
           >
             Create
           </Button>
-          
+          <Typography >The address for the connected Metamask Wallet is <i>{connectedAddress}</i></Typography>
         </Box>
       </Box>
     </Container>

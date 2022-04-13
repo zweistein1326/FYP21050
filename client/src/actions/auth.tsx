@@ -6,7 +6,7 @@ export const login = ({username, publicKey}:User) => ({
     payload: {
         username,
         publicKey,
-        signedIn: false
+        signedIn: true
     }
 })
 

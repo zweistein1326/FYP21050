@@ -60,20 +60,44 @@ const RevokePage = () => {
   const [receiverAddress, setReceiverAddress] = useState<any>('')
   const [credentials, setCredentials] = useState<any[]>([])
   const [docRevoke, setDocRevoke] = useState<any>('')
-  const baseUrl = 'https://fyp21050-server.herokuapp.com'
+  const [revokeReason, setRevokeReason] = useState<any>('')
+  const [checkCredentials, setCheckCredentials] = useState<any>('')
+  const baseUrl = 'http://127.0.0.1:8000/'
 
 
 
   console.log("My token is", tokens)
   console.log(state,'state')
 
-  useEffect(()=>{
-    if(state){
-        console.log(state['newUser'][0].username, 'inside')
-        setName(state['newUser'][0].username)
-    }
+  useEffect(()=>{ 
     connectWalletHandler();
-  },[state])
+    getCredentials();
+  },[])
+
+  // const getCredentials = async () =>{
+  //   const retrievedString :any = localStorage.getItem('user') || '';
+  //   const user = JSON.parse(retrievedString);
+  //   const res : AxiosResponse<any> = await axios.get(baseUrl+'getFilesByUser?userId='+user.user.id)
+  //   console.log(res.data,baseUrl+'getFilesByUser?userId'+user.user.id);
+  //   res.data.credentials.forEach((i:any)=>{
+  //     setCredentials([...credentials, i.data[2]] )
+  //   })
+  // }
+
+  const getCredentials = async () =>{
+    const retrievedString :any = localStorage.getItem('user') || '';
+    const user = JSON.parse(retrievedString);
+    const res : AxiosResponse<any> = await axios.get(baseUrl+'getFilesByUser?userId='+user.user.id)
+    console.log(res.data,baseUrl+'getFilesByUser?userId'+user.user.id);
+    res.data.credentials.forEach((i:any)=>{
+      if(i.isValid === true){
+        setCredentials(oldData=>[...oldData, i.data[0]] )
+      setCheckCredentials((oldData:any)=>[...oldData, i])
+      }
+    })
+    
+  }
+
 
   const connectWalletHandler = () => {
     if(window.ethereum){
@@ -106,11 +130,7 @@ const RevokePage = () => {
     console.log(event.target.files[0]);
   }
 
-  const getCredentials = async () =>{
-    const res : AxiosResponse<any> = await axios.get('http://127.0.0.1:8000/getAllCredentials?username='+name)
-    console.log(res.data);
-  }
-
+  
 //   const 
 
   const handleSubmitTransfer = async (event:any) =>{
@@ -162,6 +182,29 @@ const RevokePage = () => {
     }
   } 
 
+  const handleRevocation = async (event:any) =>{
+    event.preventDefault();
+
+    var credentialId = '' 
+    const retrievedString :any = localStorage.getItem('user') || '';
+    const user = JSON.parse(retrievedString);
+    checkCredentials.map((i:any)=>{      
+      if(i.data[0] === docRevoke){
+        credentialId = i.id
+        console.log('check')
+      }
+    })
+    const payload = {
+      credentialId, 
+      senderAddress: user.user.id, 
+      reason: revokeReason, 
+      walletAddress: defaultAccount,
+    }
+    console.log(payload)
+    const res : AxiosResponse<any> = await axios.post(baseUrl+'revoke', payload)
+    console.log('result of send',res.data)
+  }
+
   
   return (
     <Layout>
@@ -174,7 +217,7 @@ const RevokePage = () => {
           alignItems: 'center',
         }}
       >
-        <Box component="form" onSubmit={connectWalletHandler} noValidate sx={{ mt: 1, marginBottom:3 }}>
+        <Box component="form" onSubmit={handleRevocation} noValidate sx={{ mt: 1, marginBottom:3 }}>
           <Typography variant='h5' display="block" gutterBottom>Revocation</Typography>
           <Card sx={{width: '100%'}}>
               {/* <Typography variant='h6' display="block" gutterBottom>
@@ -191,12 +234,15 @@ const RevokePage = () => {
                     disablePortal
                     id="combo-box-demo"
                     options={credentials}
+                    onChange={(event, value) => setDocRevoke(value)}
                     // sx={{ width: }}
-                    renderInput={(params) => <TextField {...params} label="Credential" value={docRevoke} onChange={(e)=> setDocRevoke(e.target.value)} />}
+                    renderInput={(params) => <TextField {...params} label="Credential"  />}
                     size='small'
                 />
                 </Grid>
+                <Grid item xs={12}><TextField style={{width:'60%'}} label="Reason" value={revokeReason} onChange={(e)=> setRevokeReason(e.target.value)} /></Grid>
                 <Grid item xs={12}>
+
                 <Button
                     type="submit"
                     variant="contained"

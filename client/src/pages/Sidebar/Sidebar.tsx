@@ -9,7 +9,8 @@ import { makeStyles, Theme } from "@material-ui/core/styles";
 
 const useStyles = makeStyles((theme: Theme) => ({
   drawer: {
-    background: "#D8DCD6",
+    // background: "#D8DCD6",
+    background:"#36454f",
     position: "static",
   },
   closed: {

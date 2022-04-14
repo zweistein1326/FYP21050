@@ -1,332 +1,204 @@
-const router = require('express').Router();
-const ipfsClient = require('ipfs-http-client');
 const fs = require('fs');
-const ipfs = ipfsClient.create({
-    host: "localhost",
-    port: 5001,
-    protocol: "http"
-});
-const formidable = require('formidable');
-const auth = require('../components/auth');
-const { addFileToUser, getUserFiles } = require('../../database');
+const router = require('express').Router();
+const {addFile, encrypt, decrypt} = require('./helperFunctions')
+const usersContract = require('../../blockchain/build/contracts/Users.json');
 const Web3 = require('web3');
-const credentialHashContract = require('../../blockchain/build/contracts/CredentialHash.json');
-const uniqueAssetContract = require('../../blockchain/build/contracts/UniqueAsset.json');
-const pinataAPIKey = process.env.PINATA_API_KEY;
-const pinataSecretKey = process.env.PINATA_SECRET_KEY
-const pinata_secret_token = process.env.PINATA_SECRET_TOKEN;
-const axios = require('axios');
-const FormData = require('form-data');
-const { platform } = require('os');
+
+var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545/'));
+var usersDeployedContract = new web3.eth.Contract(usersContract.abi, usersContract.networks[5777].address);
 
 const setDefaultAccount = async () => {
     var account = await web3.eth.getAccounts();
     web3.eth.defaultAccount = account[0];
 }
 
-var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545/'));
-setDefaultAccount();
-var credentialHashDeployedContract = new web3.eth.Contract(credentialHashContract.abi, credentialHashContract.networks[5777].address);
-var uniqueAssetDeployedContract = new web3.eth.Contract(uniqueAssetContract.abi, uniqueAssetContract.networks[5777].address);
+setDefaultAccount()
 
+/* --------------------------API Endpoints-------------------------- */
 
-
-
-router.get('/', async (req, res, next) => {
-    return res.json("Hello World");
+router.get('/', async(req,res,next)=>{
+    return res.send('Server running')
 })
 
-/* 
-    Upload File to IPFS 
-*/
+// * Register
+router.post('/register', async (req, res, next) => {
+    
+    const {username, walletAddress} = req.body;
+    
+    try{
+        const tx = await usersDeployedContract.methods.createNewUser(username, walletAddress).send({from: walletAddress, gas:1000000});
+        // web3.eth.accounts.signTransaction(tx);
+        const user = await usersDeployedContract.methods.getUserByUsername(username).call({from: web3.eth.defaultAccount, gas:1000000});
+        const returnUser = {id:user.id, username:user.username, publicKey:user.publicKey, credentialIds:user.credentialIds}
+        return res.status(200).json({user: returnUser, success: true})
+    }
+    catch(e){
+        return res.status(200).json({message:e.message, success:false})
+    }
+})
+
+// * Login
+router.post('/login', async (req, res, next) => {
+    const {username, walletAddress} = req.body;
+    try{
+        const user = await usersDeployedContract.methods.getUserByUsername(username).call({from: web3.eth.defaultAccount, gas:100000});
+        if(user.walletAddress == walletAddress){
+            const returnUser = {id:user.id, username:user.username, walletAddress:user.walletAddress, credentialIds:user.credentialIds}
+            return res.status(200).json({user: returnUser, success:true});
+        }
+        return res.status(200).json({message:'Login Failed',success:false});
+    }
+    catch(e){
+        return res.status(200).json({message:e.message, success:false})
+    }
+})
+
+// * Get credentials by User
+router.get('/getFilesByUser',async(req,res,next)=>{
+    let userCredentials = [];
+    const userId = req.query.userId;
+    try{
+        const user = await usersDeployedContract.methods.getUserById(userId).call({from:web3.eth.defaultAccount, gas:100000});
+        console.log(user)
+
+        if(user.credentialIds.length>0){
+            user.credentialIds.forEach(async(credentialId,index)=>{
+                const credential = await usersDeployedContract.methods.getCredentialById(credentialId).call({from:web3.eth.defaultAccount, gas:100000});
+                const newCredential = {id:credential.id, createdBy:credential.createdBy, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers.map((viewer)=>({id:viewer.id, data:{fileName:viewer.data.fileName, assetHash:viewer.data.assetHash, metadataUrl: viewer.data.metadataUrl}, permissions:{transfer: viewer.permissions.transfer, share:viewer.permissions.share, revoke: viewer.permissions.revoke}}))}
+                userCredentials.push(newCredential);
+                if(index == user.credentialIds.length-1)
+                {
+                    return res.status(200).json({credentials:userCredentials,success:true})
+                }
+            })
+        }
+        else{
+            return res.status(200).json({credentials:userCredentials, success:true})
+        }
+    }
+    catch(e){
+        return res.json({message:e.message, success:false})
+    }
+})
+
+// * Upload Document
 router.post('/upload', async (req, res, next) => {
-    // upload any kind of files
-    // add file hash to ethereum
-    console.log('filesss --------- ', req.files)
-    let fileObj = {};
-    let fileSend = {}
-    if (req.files.inputFile) {
-        console.log(req.file)
-        const file = req.files.inputFile;
-        const fileName = file.name;
-        const filePath = __dirname + "/img/" + fileName;
+    const { senderAddress, walletAddress, viewers } = req.body;
+    // viewers = [{id:string, data:{fileName:string, assetHash:string, metadataUrl:string}, permissions:{revoke:boolean, share:boolean, transfer: boolean}}]
+    let fileSend = {};
 
-        file.mv(filePath, async (err) => {
-            if (err) {
-                console.log("Error: failed to download file.");
-                return res.status(500).send(err);
-            }
-            const fileHash = await addFile(fileName, filePath);
-            console.log("File Hash received -->", fileHash);
-            fs.unlink(filePath, (err) => {
+    try{
+        if (req.files) {
+            const file = req.files.inputFile;
+            const fileName = file.name;
+            const filePath = __dirname + fileName;
+            file.mv(filePath, async (err) => {
                 if (err) {
-                    console.log("Error: Unable to delete file", err);
+                    return res.status(500).send(err);
                 }
-            });
-            fileObj = {
-                file: file,
-                name: fileName,
-                path: filePath,
-                hash: fileHash,
-            }
-
-
-            // const data = web3.eth.accounts.sign(fileHash.toString(), '0f529545995df0da31150eeadb0036083d18698362c42e186cbdb785b984f0c9');
-            const data = web3.eth.accounts.sign(fileHash.toString(), '63b87947cc2fb9661ac095c901243d15f4329ebd4f9d9dad3bc4b41f3c0bff69');
-
-            // save signature with user
-
-            const recoveredData = web3.eth.accounts.recover(data.message, data.signature); // recover data
-
-            // credentialHashDeployedContract.methods.saveHash(fileHash.toString()).send({ from: web3.eth.defaultAccount }).on('receipt', async (result) => {
-            //     saveHash = result
-            //     resultCid = await credentialHashDeployedContract.methods.getHash().call({ to: saveHash.to })
-            // });
-            // console.log(resultCid);
-            const assetHash = fileHash.toString();
-            const metadataUrl = `ipfs://${assetHash}`
-            const recepientAddress = web3.eth.defaultAccount;
-            // credentialHashDeployedContract.methods.saveHash(fileHash.toString()).send({ from: web3.eth.defaultAccount }).on('receipt', async (result) => {
-            //     saveHash = result
-            //     resultCid = await credentialHashDeployedContract.methods.getHash().call({ to: saveHash.to })
-            // });
-            try {
-                console.log({ recepientAddress, assetHash, metadataUrl });
-                // console.log(web3.eth.defaultAccount, 'check default account');
-                const tokenId = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).call({ from: recepientAddress, gas: '1000000' })
-                await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).send({ from: recepientAddress, gas: '1000000' });
-                // console.log(tokenId.toNumber())
-                // const tokenId = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).call({ from: recepientAddress, gas: '1000000' })
-
-                // const owner = await uniqueAssetDeployedContract.methods.ownerOf(tokenId).call({ from: recepientAddress, gas: '1000000' });
-
-                console.log(tokenId)
-                // console.log(token);
-
-                if (process.platform === "darwin") {
-                    fileSend = {
-                        name: fileName,
-                        tokenId: tokenId
+                
+                const fileHash = await addFile(fileName, filePath);
+                fs.unlink(filePath, (err) => {
+                    if (err) {
+                        console.log("Error: Unable to delete file", err);
                     }
+                });
+                const assetHash = fileHash.toString();
+                const metadataUrl = `https://ipfs.io/ipfs/${assetHash}`
+                try {
+                    // const user = await usersDeployedContract.methods.getUserById(senderAddress).call({from: web3.eth.defaultAccount, gas:100000});
+        
+                    // const encryptedAssetHash = await encrypt(assetHash, user.publicKey)
+                    // const encryptedMetadataUrl = await encrypt(metadataUrl, user.publicKey)
+
+                    // fileSend = { name: fileName, encryptedMetadataUrl, encryptedAssetHash }
+
+                    const tx = await usersDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), [{id:'1', data:{fileName, assetHash, metadataUrl}, permissions:{transfer:true, revoke:true, share:true}}]).send({from: walletAddress, gas:1000000}); // Add credential to list of all credentials
+                    const credentialId = await usersDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), [{id:'1',data:{fileName, assetHash, metadataUrl}, permissions:{transfer:true, revoke:true, share:true}}]).call({from: web3.eth.defaultAccount, gas:1000000}) - 1 ; // Add credential to list of all credentials
+                    const credential =  await usersDeployedContract.methods.getCredentialById(credentialId).call({from: web3.eth.defaultAccount, gas:'1000000'}); // Add credential to list of all credentials
+                    const newCredential = {id:credential.id, createdBy:credential.createdBy, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers.map((viewer)=>({id:viewer.id, data:{fileName:viewer.data.fileName, assetHash:viewer.data.assetHash, metadataUrl: viewer.data.metadataUrl}, permissions:{transfer: viewer.permissions.transfer, share:viewer.permissions.share, revoke: viewer.permissions.revoke}}))}
+                    return res.json({credential:newCredential, success:true});
                 }
-                else {
-                    fileSend = {
-                        name: fileName,
-                        tokenId: tokenId.toNumber()
-                    }
+                catch (e) {
+                    return res.json({message:e.message, success: false});
                 }
-                // Transfer of ownership using transferFrom in Remix
-
-
-
-                // const resData2 = await uniqueAssetDeployedContract.methods.tokenURIs(2).call({ from: recepientAddress });
-                // console.log('resData2', resData2);
-                // tokenId = resData.toNumber();
-                // console.log(tokenId);
-            }
-            catch (e) {
-                console.log(e);
-            }
-
-
-
-            // addFileToUser('10', fileObj);
-            // Send TokenID
-            console.log('file sent',fileSend)
-            return res.json(fileSend);
-
-        })
+            })
+        }
+        else{
+            return res.status(200).json({message: 'Please upload a file', success: false});
+        }
+    }
+    catch(e){
+        return res.json({message:e.message, success: false});
     }
     
-    // return res.json('Uploaded');
 })
 
-/**
- * Transfer of Ownership
- * Input: tokenId
- */
+// * Fetch Credential By Id
+router.get('/getCredential', async(req, res, next)=> {
+    const {credentialId} = req.query;
+    try{
+        const credential = await usersDeployedContract.methods.getCredentialById(credentialId).call({from: web3.eth.defaultAccount, gas:100000});
+        const newCredential = {id:credential.id, createdBy:credential.createdBy, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers.map((viewer)=>({id:viewer.id, data:{fileName:viewer.data.fileName, assetHash:viewer.data.assetHash, metadataUrl: viewer.data.metadataUrl}, permissions:{transfer: viewer.permissions.transfer, share:viewer.permissions.share, revoke: viewer.permissions.revoke}}))}
+        return res.status(200).json({credential: newCredential, success:true})
+    }
+    catch(e){
+        return res.status(200).json({message:e.message, success:false})
+    }
+})
+
+// * Transfer credential
 router.post('/transfer', async (req, res, next) => {
-    // To get tokenid of asset requirements: recepientAddress, assetHash?, metadataUrl
-    console.log('checker')
-    const fromAddress = req.body.from
-    const toAddress = req.body.to
-    const tokenId = req.body.tokenId
-    // console.log(tokenId,toAddress)
-
-    const recepientAddress = web3.eth.defaultAccount;
+    const {from:fromAddress, to:toAddress, credentialId, walletAddress} = req.body;
+    
     try {
-
-        const owner = await uniqueAssetDeployedContract.methods.ownerOf(tokenId).call({ from: recepientAddress, gas: '1000000' });
-        if (owner === fromAddress) {
-            console.log(owner, recepientAddress)
-            uniqueAssetDeployedContract.methods.transferFrom(owner, toAddress, tokenId).send({ from: owner, gas: '1000000' });
-            const ret = {
-                message: 'Successful',
-                newOwner: req.body.to
-            }
-            res.json(ret)
+        const originalCredential = await usersDeployedContract.methods.getCredentialById(credentialId).call({from: web3.eth.defaultAccount, gas:100000});
+        const fromUser = await usersDeployedContract.methods.getUserById(fromAddress).call({from: web3.eth.defaultAccount, gas:100000});
+        const toUser = await usersDeployedContract.methods.getUserById(toAddress).call({from: web3.eth.defaultAccount, gas:100000});
+        
+        if(toUser.id!==""){
+            await usersDeployedContract.methods.transferCredential(originalCredential.id, fromAddress, toAddress,{fileName:'',assetHash:'', metadataUrl:''},{revoke:false, share:true, transfer:true}).send({from: walletAddress, gas:2000000});
+            const credential = await usersDeployedContract.methods.getCredentialById(originalCredential.id).call({from: web3.eth.defaultAccount, gas:100000});
+            const newCredential = {id:credential.id, createdBy:credential.createdBy, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers.map((viewer)=>({id:viewer.id, data:{fileName:viewer.data.fileName, assetHash:viewer.data.assetHash, metadataUrl: viewer.data.metadataUrl}, permissions:{transfer: viewer.permissions.transfer, share:viewer.permissions.share, revoke: viewer.permissions.revoke}}))}
+            return res.status(200).json({credential: newCredential, success:'true'})
         }
-
-        res.status(400).json("Unsuccesful")
+        else{
+            return res.status(200).json({message:`User does not exist`, success:false})
+        }
+        
     }
     catch (e) {
-        console.log(e.message)
-    }
-
-
-    // try {
-
-    // }
-    // catch (error) {
-    //     console.log(error.message);
-    // }
-})
-
-router.get('/owner', async (req, res, next) => {
-    // To get tokenid of asset requirements: recepientAddress, assetHash?, metadataUrl
-    console.log('checker')
-    // const fromAddress = req.body.from
-    // const toAddress = req.body.to
-    const tokenId = req.query.tokenId
-    console.log(tokenId)
-
-    const recepientAddress = web3.eth.defaultAccount;
-    try {
-        // const tokenId = await uniqueAssetDeployedContract.methods.awardItem(recepientAddress, assetHash, metadataUrl).call({ from: recepientAddress, gas: '1000000' })
-        // console.log(tokenId.toNumber())
-        // const tokens = await uniqueAssetDeployedContract.methods.name().call({ from: recepientAddress, gas: '1000000' });;
-        const owner = await uniqueAssetDeployedContract.methods.ownerOf(tokenId).call({ from: recepientAddress, gas: '1000000' });;
-        console.log(owner)
-        // uniqueAssetDeployedContract.methods.transferFrom(owner,toAddress, tokenId).send({ from: owner, gas: '1000000' });
-        // console.log(tokenTransfer)
-        res.json({ owner })
-    }
-    catch (e) {
-        console.log(e.message)
-    }
-
-
-    // try {
-
-    // }
-    // catch (error) {
-    //     console.log(error.message);
-    // }
-})
-
-
-router.get('/getByTokenId/:tokenId', async (req, res, next) => {
-    const { tokenId } = req.params;
-    console.log('check id', tokenId)
-    const recepientAddress = web3.eth.defaultAccount;
-
-    try {
-        const tokenUri = await uniqueAssetDeployedContract.methods.tokenURIs(tokenId).call({ from: recepientAddress, gas: '1000000' });
-        return res.status(200).json({ tokenUri });
-    }
-    catch (error) {
-        console.log(error.message);
-        return res.status(400).json({ tokenUri: null });
+        return res.status(200).json({message: e.message, success:false})
     }
 })
 
-/* 
-    Add file to IPFS 
-*/
+// * Revoke Credential
+router.post('/revoke', async(req,res,next)=>{
+    const {credentialId, senderAddress, reason, walletAddress} = req.body;
 
-const addFile = async (fileName, filePath) => {
-    const file = fs.readFileSync(filePath);
-    const filesAdded = await ipfs.add({ path: fileName, content: file }, {
-        progress: (len) => console.log("Uploading file...", len)
-    });
-    const fileHash = filesAdded.cid;
-    return fileHash;
-}
-
-/* 
-    Get File by CID -> Fetch directly from IPFS 
-*/
-
-router.get('/file/:cid', async (req, res, next) => {
-    const { cid } = req.params;
-    const result = await getData(cid);
-    // console.log(result);
-    return res.json({ file: result });
+    try{
+        await usersDeployedContract.methods.revokeCredential(credentialId, senderAddress, reason).send({from: walletAddress, gas:100000});
+        const credential = await usersDeployedContract.methods.getCredentialById(credentialId).call({from:web3.eth.defaultAccount, gas:100000});
+        const newCredential = {id:credential.id, createdBy:credential.createdBy, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers.map((viewer)=>({id:viewer.id, data:{fileName:viewer.data.fileName, assetHash:viewer.data.assetHash, metadataUrl: viewer.data.metadataUrl}, permissions:{transfer: viewer.permissions.transfer, share:viewer.permissions.share, revoke: viewer.permissions.revoke}}))}
+        return res.status(200).json({credential: newCredential, success:true})
+    }
+    catch(e){
+        return res.status(200).json({message:e.message, success:false})
+    }
 })
 
-const getData = async (hash) => {
-    const asyncitr = ipfs.cat(hash);
-    let data = [];
-    let count = 0;
-    const file = writeDataToFile(asyncitr);
-    // console.log(data);
-    return file;
-}
-
-const writeDataToFile = async (asyncitr) => {
-    getFilePath();
-    const file = fs.createWriteStream(__dirname + '/img/' + 'me.doc'); // __dirname + '/img' + filename
-    for await (const itr of asyncitr) {
-        file.write(Buffer.from(itr));
+// * Selective Disclosure
+router.post('/addViewer', async(req,res,next)=>{
+    const {credentialId, viewers, senderId, walletAddress} = req.body;
+    try{
+        await usersDeployedContract.methods.addViewerToCredential(credentialId, senderId, viewers).send({from: walletAddress, gas:900000});
+        const credential = await usersDeployedContract.methods.getCredentialById(credentialId).call({from:web3.eth.defaultAccount, gas:00000});
+        const newCredential = {id:credential.id, createdBy:credential.createdBy, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers.map((viewer)=>({id:viewer.id, data:{fileName:viewer.data.fileName, assetHash:viewer.data.assetHash, metadataUrl: viewer.data.metadataUrl}, permissions:{transfer: viewer.permissions.transfer, share:viewer.permissions.share, revoke: viewer.permissions.revoke}}))}
+        return res.json({credential: newCredential, success:true});
     }
-    file.end();
-    return file;
-}
-
-/*  
-    Login existing user
-*/
-router.post('/login', async (req, res, next) => {
-    console.log('login');
-    auth.login(req.body)
-        .then(user => {
-            console.log(user);
-            if (user) {
-                return res.json(user)
-            }
-            return res.status(400).json({ message: 'Username or password incorrect' });
-        })
-        .catch(e => {
-            return next(e)
-        })
+    catch(e){
+        return res.status(200).json({message:e.message, success:false})
+    }
 })
-
-/*
-    Register new user
-*/
-
-router.post('/register', async (req, res, next) => {
-    const account = web3.eth.accounts.create();
-})
-
-router.post('/getAllFiles', async (req, res, next) => {
-    const { userId } = req.params;
-    const userFiles = getUserFiles(userId);
-    if (userFiles !== null) {
-        return res.status(200).json({ files: userFiles });
-    }
-    else {
-        return res.status(200).json({ files: null, message: 'User does not have any existing files' });
-    }
-});
-
-
-const pinFileToIPFS = async () => {
-    const url = `https://api.pinata.cloud/pinning/pinFileToIPFS`;
-
-    var data = new FormData();
-    var tokenId = null;
-
-    data.append('file', fs.createReadStream(__dirname + '/img/me.png'));
-
-    const res = await axios.post(url, data, {
-        maxContentLength: "Infinity",
-        headers: {
-            "Content-Type": `multipart/form-data;boundary = ${data._boundary}`,
-            pinata_api_key: pinataAPIKey,
-            pinata_secret_api_key: pinataSecretKey
-        }
-    });
-}
 
 module.exports = router;

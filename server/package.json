@@ -12,6 +12,7 @@
     "fs-extra": "^10.0.0",
     "http": "*",
     "ipfs-http-client": "^55.0.0",
+    "js-crypto-rsa": "^1.0.4",
     "moment": "^2.29.1",
     "node-metamask": "^1.1.2",
     "nodemon": "^2.0.15",
@@ -22,9 +23,8 @@
   "name": "server",
   "version": "1.0.0",
   "main": "index.js",
-  "devDependencies": {},
   "scripts": {
-    "start:dev": "nodemon app.js",
+    "dev": "nodemon app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

@@ -1,6 +1,5 @@
 import {Grid, List} from "@mui/material";
 import { useLocation } from "react-router-dom";
-// import {makeStyles} from '@mui/styles'
 import { makeStyles, Theme } from "@material-ui/core/styles";
 
 import { DRAWER_LIST } from "./menu";
@@ -9,7 +8,12 @@ import MenuItem from "./MenuItem";
 const useStyles = makeStyles(() => ({
   padding: {
     padding: 0,
+    textDecoration: 'none',
+    color: "white",
   },
+  textDecoration : {
+      textDecoration: "none"
+  }
 }));
 
 const MenuItemsList = () => {
@@ -26,8 +30,10 @@ const MenuItemsList = () => {
             literal={literal}
             route={route}
             key={route}
-            selected={pathname === route}
-          />
+            selected={pathname === route} 
+          >
+              {literal}
+          </MenuItem>
         ))}
       </List>
     </Grid>

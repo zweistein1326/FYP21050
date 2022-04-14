@@ -16,9 +16,14 @@ import {
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useMutation } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
+<<<<<<< .merge_file_seUcZU
 import { LOGIN } from '../graphql';
 import {connect, useDispatch, useSelector} from 'react-redux';
 import { login } from '../actions/auth';
+=======
+import {connect} from 'react-redux';
+// import { login } from '../actions/auth';
+>>>>>>> .merge_file_JDKi2q
 import { User } from '../models/User';
 import { privateEncrypt } from 'crypto';
 import axios, { AxiosResponse } from 'axios';
@@ -31,9 +36,9 @@ const Login = (props:any) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [message, setMessage] = useState<string>('');
+<<<<<<< .merge_file_seUcZU
   const [submitLogin, { loading, error }] = useMutation(LOGIN);
   const [username, setUsername] = useState<any>('');
-  // const [privateKey, setPrivateKey] = useState<string>('');
   const [address, setAddress] = useState<string>('');
   
   const connectWalletHandler = async () => {
@@ -44,59 +49,47 @@ const Login = (props:any) => {
       console.log(err);
     }
   }
+=======
+>>>>>>> .merge_file_JDKi2q
+
+  const checkKey=async()=>{
+    const retrievedString :any = localStorage.getItem('keyAccount') || '';
+    const key = JSON.parse(retrievedString);
+    console.log('check storage',key.privateKey, typeof(key.privateKey), typeof(username))
+  }
+
   useEffect(()=>{
     connectWalletHandler();
-    // GetCookies();
+    checkKey();
   },[])
 
 
 
   const HandleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // const data = new FormData(event.currentTarget);
-    // const password:string = data.get('password')?.toString() || '';
-    // console.log(password);
 
     const userTemp = 'user4'
     const walletTemp= '0x0AC9Be48d8b52F707161c6001b3fb3d13d4B3214'
     
-    // const onLogin =  (name: string) =>{
-    //   useCallback(()=>{
-    //     dispatch(login(name))
-    //   },[dispatch])
-    // }
-
-    // const onLogin = React.useCallback(
-    //   function(name:any) {
-    //     dispatch(login(name));
-    //   },
-    //   [dispatch]
-    // );
-
-
-    const privateKey:string = localStorage.getItem('privateKey') || '';
-    console.log('private key', privateKey)
     const payload = {
       username: username,
       walletAddress: address,
-      privateKey: privateKey
     };
+<<<<<<< .merge_file_seUcZU
 
     const payloadStore = {
       username: username,
       publicKey: address,
     }
 
-    const baseUrl = 'https://fyp21050-server.herokuapp.com'
-    // login
+    const baseUrl = 'http://127.0.0.1:8000/'
     try{
-      const res : AxiosResponse<any> = await axios.post(baseUrl+'/login', payload)
-      console.log('result',res)
-      var successTemp = true 
-      // if(res.data.success === true){
-      if(successTemp === true){
-        // onLogin(username)
+      console.log(payload)
+      const res : AxiosResponse<any> = await axios.post(baseUrl+'login', payload)
+      console.log('result',res.data)
+      if(res.data.success === true){
         console.log(username,'username')
+        localStorage.setItem('user', JSON.stringify(res.data));
         dispatch(login(payloadStore))
         console.log('checker')
         navigate('/home',{state: {username, address}})
@@ -109,25 +102,8 @@ const Login = (props:any) => {
       console.log(e)
     }
     
-  //   submitLogin({
-  //     variables: {
-  //       input: payload,
-  //     },
-  //   })
-  //     .then((res) => {
-  //       const { status, token, message, user } = res.data.login;
-  //       if (status === 'success') {
-  //         props.login(user)
-  //         localStorage.setItem('token', token);
-  //         navigate(`/user/${user.id}`);
-  //       } else {
-  //         setMessage(message);
-  //       }
-  //     })
-  //     .catch((err) => {
-  //       console.error(err);
-  //       if (error) setMessage(error.message);
-  //     });
+=======
+>>>>>>> .merge_file_JDKi2q
   };
 
   return (
@@ -163,17 +139,7 @@ const Login = (props:any) => {
             autoFocus
             value={username}
             onChange={(e:any)=> setUsername(e.target.value)}
-          />
-          {/* <TextField
-            margin="normal"
-            required
-            fullWidth
-            name="privateKey"
-            label="Private Key"
-            type="privateKey"
-            id="privateKey"
-            autoComplete="privateKey"
-          /> */}
+          />        
           <TextField
             margin="normal"
             required
@@ -183,27 +149,18 @@ const Login = (props:any) => {
             type="address"
             id="address"
             autoComplete="address"
-          />
-          {/* <FormControlLabel
-            control={<Checkbox value="remember" color="primary" />}
-            label="Remember me"
-          /> */}
+          />          
           <Button
             type="submit"
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={loading}
           >
             Sign In
           </Button>
-          <Typography >The address for the connected Metamask Wallet is {address}</Typography>
-          <Grid container>
-            {/* <Grid item xs>
-              <Link href="#" variant="body2">
-                Forgot password?
-              </Link>
-            </Grid> */}
+          <Typography >The address for the connected Metamask Wallet is <i>{address}</i></Typography>
+          <br></br>
+          <Grid container>            
             <Grid item>
               <Grid item>
                 <Link href="/register" variant="body2">
@@ -219,9 +176,12 @@ const Login = (props:any) => {
 };
 
 const mapDispatchToProps = (dispatch:any)=> ({
+<<<<<<< .merge_file_seUcZU
   login: (userData:any) => dispatch(login(userData)),
+=======
+//   login: (userData:User) => dispatch(login(userData)),
   // logout: () => dispatch(logout())
+>>>>>>> .merge_file_JDKi2q
 });
 
 export default connect(null, mapDispatchToProps)(Login);
-// export default Login;

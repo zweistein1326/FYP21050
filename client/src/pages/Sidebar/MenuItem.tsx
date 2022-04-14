@@ -15,11 +15,11 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     button: {
       "&:hover": {
-        backgroundColor: theme.palette.primary.light,
+        backgroundColor: "#778899",
         color: theme.palette.common.white,
       },
       "&$selected": {
-        backgroundColor: theme.palette.primary.dark,
+        backgroundColor: "#C0C0C0",
         color: theme.palette.common.white,
       },
     },
@@ -66,7 +66,8 @@ const MenuItem: React.FC<Props> = ({
       <ListItemIcon className={classes.listIcon}>
         <Icon className={classes.icon} />
       </ListItemIcon>
-      <ListItemText className={classes.linkDecoration} primary={literal} />
+      <ListItemText primary={literal} />
+      
     </ListItem>
   );
   return route ? <Link to={route}>{link}</Link> : link;

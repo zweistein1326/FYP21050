@@ -1,13 +1,19 @@
 import { AnyARecord } from "dns";
 import { User } from "../models/User";
 
+<<<<<<< .merge_file_tqg6jU
 export const login = ({username, publicKey}:User) => ({
     type: 'LOGIN',
     payload: {
         username,
         publicKey,
-        signedIn: false
+        signedIn: true
     }
+=======
+export const setAccount = (account:string) => ({
+    type: 'SET_ACCOUNT',
+    account:account
+>>>>>>> .merge_file_85MzbT
 })
 
 export const credentials = ({ username }:any) => ({

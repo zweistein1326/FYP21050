@@ -14,6 +14,11 @@ import {
   Card,
   CardContent,
   Autocomplete,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from '@mui/material';
 import Button from '@mui/material/Button';
 import { DataGrid, GridColDef, GridValueGetterParams } from '@mui/x-data-grid';
@@ -23,28 +28,17 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { REGISTER } from '../../graphql';
 import { ethers } from 'ethers';
 import axios, { AxiosResponse } from 'axios';
-// import SideBarLayout from './SidebarLayout'
-import fs from 'fs';
-import { id } from 'ethers/lib/utils';
 import Layout from './Layout'
 import { AppState } from '../../store/configureStore'
 import { connect, useSelector } from 'react-redux';
-import { assertName } from 'graphql';
 
 
 declare var window: any;
 
 
- interface TestResponseInterface {
-   name: string,
-   tokenId: number
- }
-
 const RevokePage = () => {
   const navigate = useNavigate();
-//   const {state} = useLocation();
   const state = useSelector((s: any)=> s.auth) 
-  console.log(state)
   const [message, setMessage] = useState<string>('');
   const [submitRegister, { loading, error }] = useMutation(REGISTER);
   const [errorMessage, setErrorMessage] = useState<any>(null);
@@ -52,28 +46,41 @@ const RevokePage = () => {
   const [userBalance, setUserBalance] = useState<any>(null);
   const [connButtonText, setConnButtonText] = useState('Connect Wallet');
   const [file,setFile] = useState<File | null>(null);
-  const [tokens, setToken] = useState<TestResponseInterface[]>([]);
-  const [showToken, setShowToken] = useState<any[]>([])
-  const [tokenUrl, setTokenUrl] = useState <any[]>([]);
-  const [tokenCount, setTokenCount]= useState<number>(1);
-  const [name, setName] = useState<string>('');
   const [receiverAddress, setReceiverAddress] = useState<any>('')
   const [credentials, setCredentials] = useState<any[]>([])
   const [docRevoke, setDocRevoke] = useState<any>('')
-  const baseUrl = 'https://fyp21050-server.herokuapp.com'
+  const [revokeReason, setRevokeReason] = useState<any>('')
+  const [checkCredentials, setCheckCredentials] = useState<any>('')
+  const [open, setOpen] = useState<any>('')
+  const baseUrl = 'http://127.0.0.1:8000/'
 
 
-
-  console.log("My token is", tokens)
-  console.log(state,'state')
-
-  useEffect(()=>{
-    if(state){
-        console.log(state['newUser'][0].username, 'inside')
-        setName(state['newUser'][0].username)
-    }
+  useEffect(()=>{ 
     connectWalletHandler();
-  },[state])
+    getCredentials();
+  },[])
+
+  const getCredentials = async () =>{
+    const retrievedString :any = localStorage.getItem('user') || '';
+    const user = JSON.parse(retrievedString);
+    const res : AxiosResponse<any> = await axios.get(baseUrl+'getFilesByUser?userId='+user.user.id)
+    console.log(res.data,baseUrl+'getFilesByUser?userId'+user.user.id);
+    res.data.credentials.forEach((i:any)=>{
+      if(i.isValid === true){
+        setCredentials(oldData=>[...oldData, i.data[0]] )
+      setCheckCredentials((oldData:any)=>[...oldData, i])
+      }
+    })
+    
+  }
+
+  const handleClickOpen =()=>{
+    setOpen(true)
+  }
+
+  const handleClickClose =()=>{
+    setOpen(false)
+  }
 
   const connectWalletHandler = () => {
     if(window.ethereum){
@@ -90,7 +97,6 @@ const RevokePage = () => {
   const accountChangeHandler = async(newAccount:any) => {
     setDefaultAccount(newAccount);
     getUserBalance(newAccount);
-    // setConnButtonText('Disconnect Wallet');
   }
 
   const getUserBalance = (address:any) =>{
@@ -100,71 +106,54 @@ const RevokePage = () => {
     })
   }
 
-  const onFileUpload = (event:any) => {
+  
+  const handleRevocation = async (event:any) =>{
     event.preventDefault();
-    setFile(event.target.files[0]);
-    console.log(event.target.files[0]);
-  }
 
-  const getCredentials = async () =>{
-    const res : AxiosResponse<any> = await axios.get('http://127.0.0.1:8000/getAllCredentials?username='+name)
-    console.log(res.data);
-  }
-
-//   const 
-
-  const handleSubmitTransfer = async (event:any) =>{
-    event.preventDefault();
-    if(file!== null){
-        try{
-            
-            const payload = {
-                // Add credential part
-                // credentialId: credentialId, 
-                requestSenderAddress: defaultAccount, 
-                receiverAddress: receiverAddress,
-            }
-            const res : AxiosResponse<any> = await axios.post(baseUrl+'/transfer', payload)
-            console.log('result of send',res.data.credentialId)
-        
-        } catch(err) {
-          console.error(err)
-        } 
+    var credentialId = '' 
+    const retrievedString :any = localStorage.getItem('user') || '';
+    const user = JSON.parse(retrievedString);
+    checkCredentials.map((i:any)=>{      
+      if(i.data[0] === docRevoke){
+        credentialId = i.id
+      }
+    })
+    const payload = {
+      credentialId, 
+      senderAddress: user.user.id, 
+      reason: revokeReason, 
+      walletAddress: defaultAccount,
+    }
+    console.log(payload)
+    const res : AxiosResponse<any> = await axios.post(baseUrl+'revoke', payload)
+    console.log('result of send',res.data)
+    if(res.data.success){
+      handleClickOpen()
     }
   }
-
-  const handleGetCredentials = async ()=>{
-    
-  }
-
-
-  const handleSubmitFile = async (event:any) => {
-    event.preventDefault();
-    console.log('file',file);
-    var bodyFormData = new FormData();
-    if(file!==null){
-        try{
-            const current = new Date();
-            const date = `${current.getDate()}/${current.getMonth()+1}/${current.getFullYear()}`;
-
-            const payload = {
-                inputFile: file, 
-                ownerAddress: defaultAccount, 
-                iat: date
-            }
-            const res : AxiosResponse<any> = await axios.post(baseUrl+'/uploadCredential', payload)
-            console.log('result of send',res.data.credentialId)
-
-        
-        } catch(err) {
-          console.error(err)
-        }
-    }
-  } 
 
   
   return (
     <Layout>
+      <Dialog
+        open={open}
+        onClose={handleClickClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {"Revocation Completed"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Your file has been revoked.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClickClose}>Okay</Button>
+        </DialogActions>
+      </Dialog>
+      
     <Container component="main" maxWidth="sm" >
       <Box
         sx={{
@@ -174,12 +163,9 @@ const RevokePage = () => {
           alignItems: 'center',
         }}
       >
-        <Box component="form" onSubmit={connectWalletHandler} noValidate sx={{ mt: 1, marginBottom:3 }}>
+        <Box component="form" onSubmit={handleRevocation} noValidate sx={{ mt: 1, marginBottom:3 }}>
           <Typography variant='h5' display="block" gutterBottom>Revocation</Typography>
           <Card sx={{width: '100%'}}>
-              {/* <Typography variant='h6' display="block" gutterBottom>
-                
-              </Typography> */}
             <Grid container spacing={2} sx={{width:600, margin:'15px'}}>
                 <Grid item xs={6}>
                 <Typography variant='subtitle1'>
@@ -191,12 +177,15 @@ const RevokePage = () => {
                     disablePortal
                     id="combo-box-demo"
                     options={credentials}
-                    // sx={{ width: }}
-                    renderInput={(params) => <TextField {...params} label="Credential" value={docRevoke} onChange={(e)=> setDocRevoke(e.target.value)} />}
+                    onChange={(event, value) => setDocRevoke(value)}
+                    
+                    renderInput={(params) => <TextField {...params} label="Credential"  />}
                     size='small'
                 />
                 </Grid>
+                <Grid item xs={12}><TextField style={{width:'60%'}} label="Reason" value={revokeReason} onChange={(e)=> setRevokeReason(e.target.value)} /></Grid>
                 <Grid item xs={12}>
+
                 <Button
                     type="submit"
                     variant="contained"

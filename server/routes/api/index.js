@@ -83,7 +83,7 @@ router.get('/getFilesByUser',async(req,res,next)=>{
 
 // * Upload Document
 router.post('/upload', async (req, res, next) => {
-    const { senderAddress, walletAddress } = req.body;
+    const { senderAddress, walletAddress, viewers } = req.body;
     let fileSend = {};
 
     try{

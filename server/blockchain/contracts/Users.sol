@@ -17,10 +17,18 @@ contract Users{
         string metadataUrl;
     }
 
+    struct Viewer{
+        uint id;
+        string fileName;
+        string assetHash;
+        string assetUrl;
+        bool transfer;
+    }
+
     struct Credential{
         uint id;
-        uint256 createdBy;
         CredentialData data;
+        uint256 createdBy;
         uint256 currentOwner;
         bool isValid;
         string revocationReason;
@@ -36,17 +44,21 @@ contract Users{
     mapping(uint => User) public users;
     
 
-    // * User functions
+    // * User functions * //
+
+    // * Register new user
     function createNewUser(string memory username, address walletAddress) public {
         userCount++;
         uint256[] memory credentialIds;
         users[userCount] = User(userCount, username, walletAddress, credentialIds);
     }
 
+    // * Add credential to user's credentials list 
     function addCredentialToUser(uint id, uint256 credentialId) public {
         users[id].credentialIds.push(credentialId);
     }
 
+    //  * Remove credential from user's credentials list
     function removeCredentialFromUser(uint id, uint256 credentialId) public {
         uint256 i = 0;
         for(i; i < users[id].credentialIds.length; i++){
@@ -58,10 +70,12 @@ contract Users{
         }
     }
 
+    // * Fetch user by Id
     function getUserById(uint id) public view returns (User memory){
         return users[id];
     }
 
+    // * Fetch user by username
     function getUserByUsername(string memory username) public view returns (User memory){
         uint i = 0;
         for(i; i<=userCount; i++){
@@ -74,19 +88,22 @@ contract Users{
 
     
     // * Credential functions
+
     // * Add credential to credential List and user Credentials
     function addCredential(uint256 createdBy, CredentialData memory data, string memory createdAt, uint256[] memory viewers) public returns (uint256){
         _credentialIds.increment();
         uint256 newItemId = _credentialIds.current();
-        credentials[newItemId] = Credential(newItemId, createdBy, data, createdBy, true, '', createdAt, viewers );
+        credentials[newItemId] = Credential(newItemId, data, createdBy, createdBy, true, '', createdAt, viewers );
         addCredentialToUser(createdBy, newItemId);
         return newItemId;
     }
 
+    // * Fetch credential by credentialId
     function getCredentialById(uint256 id) public view returns (Credential memory){
         return credentials[id];
     }
 
+    // * Transfer credential from FROM to TO
     function transferCredential(uint256 id, uint256 fromId, uint256 toId) public {
         if(credentials[id].currentOwner == fromId){
             credentials[id].currentOwner = toId;
@@ -97,6 +114,7 @@ contract Users{
         }
     }
 
+    // * Revoke Credential status
     function revokeCredential(uint256 id, uint256 fromId, string memory reason) public {
         if(credentials[id].createdBy == fromId){
             credentials[id].isValid = false;
@@ -107,6 +125,7 @@ contract Users{
         }
     }
 
+    // * Add viewer to list of viewers
     function addViewerToCredential(uint256 id, uint256 fromId, uint256 viewerId) public {
         if(credentials[id].createdBy == fromId){
             credentials[id].viewers.push(viewerId);

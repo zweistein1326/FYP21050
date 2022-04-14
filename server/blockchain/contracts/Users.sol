@@ -19,21 +19,25 @@ contract Users{
 
     struct Viewer{
         uint id;
-        string fileName;
-        string assetHash;
-        string assetUrl;
+        CredentialData data;
+        Permissions permissions;
+    }
+
+    struct Permissions{
         bool transfer;
+        bool revoke;
+        bool share;
     }
 
     struct Credential{
         uint id;
-        CredentialData data;
         uint256 createdBy;
         uint256 currentOwner;
         bool isValid;
         string revocationReason;
         string createdAt;
-        uint256[] viewers;
+        // uint256[] viewers;
+        Viewer[] viewers;
     }
 
     using Counters for Counters.Counter;
@@ -90,10 +94,21 @@ contract Users{
     // * Credential functions
 
     // * Add credential to credential List and user Credentials
-    function addCredential(uint256 createdBy, CredentialData memory data, string memory createdAt, uint256[] memory viewers) public returns (uint256){
+    function addCredential(uint256 createdBy, string memory createdAt, Viewer[] memory viewers) public returns (uint256){
         _credentialIds.increment();
         uint256 newItemId = _credentialIds.current();
-        credentials[newItemId] = Credential(newItemId, data, createdBy, createdBy, true, '', createdAt, viewers );
+        uint i =0;
+        Credential storage credential = credentials[newItemId];
+        credential.createdAt = createdAt;
+        credential.createdBy = createdBy;
+        credential.currentOwner = createdBy;
+        credential.id = newItemId;
+        credential.isValid = true;
+        credential.revocationReason = '';
+        while(i<viewers.length){
+            credential.viewers.push(Viewer(viewers[i].id, CredentialData(viewers[i].data.fileName, viewers[i].data.assetHash, viewers[i].data.metadataUrl), Permissions(viewers[i].permissions.transfer, viewers[i].permissions.revoke, viewers[i].permissions.share)));
+            i++;
+        }
         addCredentialToUser(createdBy, newItemId);
         return newItemId;
     }
@@ -104,35 +119,66 @@ contract Users{
     }
 
     // * Transfer credential from FROM to TO
-    function transferCredential(uint256 id, uint256 fromId, uint256 toId) public {
-        if(credentials[id].currentOwner == fromId){
-            credentials[id].currentOwner = toId;
-            removeCredentialFromUser(fromId, id);
-            addCredentialToUser(toId, id);
-        }else{
+    function transferCredential(uint256 id, uint256 fromId, uint256 toId, CredentialData memory data, Permissions memory permissions) public { 
+        uint i = 0;
+        bool flag = false;
+        Viewer[] memory viewers = credentials[id].viewers;
+        while(i < viewers.length){
+            Viewer memory viewer = credentials[id].viewers[i];
+            if(viewer.id == fromId && viewer.permissions.transfer){
+                credentials[id].currentOwner = toId;
+                credentials[id].viewers.push(Viewer(toId, data, permissions));
+                addCredentialToUser(toId, id);
+                flag = true;
+                break;
+            }
+            i++;
+        }
+        if(!flag){
             revert("User does not have correct permissions");
         }
     }
 
     // * Revoke Credential status
     function revokeCredential(uint256 id, uint256 fromId, string memory reason) public {
-        if(credentials[id].createdBy == fromId){
-            credentials[id].isValid = false;
-            credentials[id].revocationReason = reason;
+        uint i = 0;
+        bool flag = false;
+        Viewer[] memory viewers = credentials[id].viewers;
+        while(i < viewers.length){
+            Viewer memory viewer = credentials[id].viewers[i];
+            if(viewer.id == fromId && viewer.permissions.revoke){
+                credentials[id].isValid = false;
+                credentials[id].revocationReason = reason;
+                flag = true;
+                break;
+            }
+            i++;
         }
-        else{
+        if(!flag){
             revert("User does not have correct permissions");
         }
     }
 
     // * Add viewer to list of viewers
-    function addViewerToCredential(uint256 id, uint256 fromId, uint256 viewerId) public {
-        if(credentials[id].createdBy == fromId){
-            credentials[id].viewers.push(viewerId);
+    function addViewerToCredential(uint256 id, uint256 fromId, Viewer[] memory viewers) public {
+        uint i = 0;
+        bool flag = false;
+        while(i<credentials[id].viewers.length){
+            Viewer memory viewer = credentials[id].viewers[i];
+            if(viewer.id == fromId && viewer.permissions.share){
+                uint j = 0; 
+                while(j < viewers.length){
+                    credentials[id].viewers.push(Viewer(viewers[j].id, CredentialData(viewers[j].data.fileName, viewers[j].data.assetHash, viewers[j].data.metadataUrl), Permissions(viewers[j].permissions.transfer, viewers[j].permissions.revoke, viewers[j].permissions.share)));
+                    addCredentialToUser(viewers[j].id, id);
+                    j++;
+                    flag = true;
+                }
+                break;
+            }
+            i++;
         }
-        else{
+        if(!flag){
             revert("User does not have correct permissions");
         }
     }
-
 }

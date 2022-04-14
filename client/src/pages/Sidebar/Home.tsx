@@ -1,6 +1,3 @@
-// import { useState, useEffect } from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import { ethers } from 'ethers';
 import { useState, useEffect } from 'react';
 import {
   Avatar,
@@ -23,35 +20,22 @@ import axios, { AxiosResponse } from 'axios';
 import Layout from './Layout'
 import { login } from '../../actions/auth';
 import { useCookies } from 'react-cookie';
-
 import { connect, useDispatch, useSelector } from 'react-redux';
-
 
 
 declare var window: any;
 
-
- interface TestResponseInterface {
-   name: string,
-   tokenId: number
- }
-
 const Account = () => {
   const navigate = useNavigate();
-//   const {state} = useLocation();
   const state = useSelector((s: any)=> s.auth) 
   const dispatch = useDispatch();
   console.log(state)
-  const [tokens, setToken] = useState<TestResponseInterface[]>([]);
   const [name, setName] = useState<string>('');
   const [tableData, setTableData] = useState<any[]>([])
   const [cookies, setCookie] = useCookies(['user']);
   const [dataRows, setDataRows] = useState<any[]>([]);
   
   const baseUrl = "http://127.0.0.1:8000/"
-
-  console.log("My token is", tokens)
-  console.log(state,'state')
 
   useEffect(()=>{
     const retrievedObj :any = localStorage.getItem('user') || '';
@@ -62,9 +46,6 @@ const Account = () => {
         setName(user.user.username)
     }
     getCredentials();
-    // if(cookies.username!==null){
-    //     dispatch(login(payloadStore))
-    // }
   },[state])
 
   
@@ -75,22 +56,25 @@ const Account = () => {
     console.log(res.data,baseUrl+'getFilesByUser?userId'+user.user.id);
     var num = 1
     res.data.credentials.forEach((i:any)=>{
-      setDataRows(oldData=>[...oldData, {id:num, doc:i.data[0], link:i.data[2], valid:i.isValid}] )
+      var d = new Date(i.createdAt*1000)
+      console.log('date',d.getMonth(), d)
+      setDataRows(oldData=>[...oldData, {
+        id:num, 
+        doc:i.data[0], 
+        link:i.data[2],
+        assetHash: i.data[1], 
+        valid:i.isValid
+      }] )
       num = num + 1
     })
-    console.log('data rows',dataRows)
   }
-
-  
   
   const rows = dataRows;
   const columns: GridColDef[] = [
       {field: "id",headerName:'No.', width:50}, 
-      {field:"doc", headerName:'Document', minWidth:250, flex:2},
-      {field: "link", headerName:'Link', minWidth: 250, flex:2
-        // valueGetter: (params) => 
-        //   return (<a href={params.getValue("id")}>{params.getValue("id")}</a>)
-      },
+      {field:"doc", headerName:'Document', minWidth:200, flex:2},
+      {field: "link", headerName:'Link', minWidth: 200, flex:2},
+      {field: "assetHash", headerName:'Asset Hash', minWidth: 200, flex:2},
       {field: "valid", headerName:'Valid', minWidth: 50, flex:2},
     ]
 
@@ -100,7 +84,6 @@ const Account = () => {
         <Box sx={{ width: '100%', maxWidth: 1500, marginTop: '10px' }} >
         <Typography variant="h4" component="div" gutterBottom>
             Welcome {name}
-            {/* Welcome */}
         </Typography>
         <Grid>
         <Card sx={{width: '100%'}}>
@@ -123,7 +106,6 @@ const Account = () => {
         </Grid>
         </Card>
         </Grid>
-        
         </Box>  
 
     </Container>

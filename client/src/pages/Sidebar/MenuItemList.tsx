@@ -1,6 +1,5 @@
 import {Grid, List} from "@mui/material";
 import { useLocation } from "react-router-dom";
-// import {makeStyles} from '@mui/styles'
 import { makeStyles, Theme } from "@material-ui/core/styles";
 
 import { DRAWER_LIST } from "./menu";
@@ -36,9 +35,6 @@ const MenuItemsList = () => {
               {literal}
           </MenuItem>
         ))}
-        {/* <Link to="first" style={{ textDecoration: 'none' }}>
-            <MenuItem style={{ paddingLeft: 13 }}>Team 1</MenuItem>
-        </Link> */}
       </List>
     </Grid>
   );

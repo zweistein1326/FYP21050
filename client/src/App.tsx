@@ -69,22 +69,14 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />}/>
-          {/* <Route path="/user/:id" element={<Home />} />
-          <Route path="/user/:id/:credentialId" element={<CredentialPage />} />
-          <Route path="/addCredential" element={<AddCredential />} />
-          <Route path="/requestCredential" element={<RequestCredential />} />
-          <Route path="/account" element={<DashboardPage />} /> */}
           <Route path="/home" element={<DashboardPage />} />
           <Route path="/upload" element={<UploadPage />} />
           <Route path="/revoke" element={<RevokePage />} />
-
         </Routes>
       </Router>
       </Provider>
     </ApolloProvider>
     </CookiesProvider>
-    // </div>
-
   );
 }
 

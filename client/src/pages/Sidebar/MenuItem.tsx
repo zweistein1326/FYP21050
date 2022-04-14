@@ -15,12 +15,10 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     button: {
       "&:hover": {
-        // backgroundColor: theme.palette.primary.light,
         backgroundColor: "#778899",
         color: theme.palette.common.white,
       },
       "&$selected": {
-        // backgroundColor: theme.palette.primary.dark,
         backgroundColor: "#C0C0C0",
         color: theme.palette.common.white,
       },

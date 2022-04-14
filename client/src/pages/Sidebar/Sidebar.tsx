@@ -3,13 +3,11 @@ import MenuItemsList from "./MenuItemList";
 import clsx from "clsx";
 import { useDrawerContext } from "../../context/Sidebar";
 import { useMediaQuery, useTheme } from "@mui/material";
-// import {makeStyles} from '@mui/styles'
 import { makeStyles, Theme } from "@material-ui/core/styles";
 
 
 const useStyles = makeStyles((theme: Theme) => ({
   drawer: {
-    // background: "#D8DCD6",
     background:"#36454f",
     position: "static",
   },

@@ -1,12 +1,8 @@
 import { ReactNode } from "react";
-
 import Header from "./Header";
 import CustomDrawer from "./Sidebar";
 import {Toolbar} from '@mui/material';
-// import { makeStyles } from "@mui/styles";
 import { makeStyles } from "@material-ui/core/styles";
-
-// import { DrawerContextProvider } from "../contexts/drawer-context";
 import { DrawerContextProvider } from "../../context/Sidebar";
 
 const useStyles = makeStyles(() => ({
@@ -15,11 +11,9 @@ const useStyles = makeStyles(() => ({
     display: "flex",
     flexDirection: "column",
     minHeight: "100vh",
-    // background: "#343434",
     background: "#dbd7d2",
     padding: 'none',
     width: '100%',
-    // height: '100vh'
   },
   container: {
     display: "flex",

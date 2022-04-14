@@ -113,8 +113,8 @@ router.post('/upload', async (req, res, next) => {
 
                     // fileSend = { name: fileName, encryptedMetadataUrl, encryptedAssetHash }
 
-                    const tx = await usersDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), [{id:'1', data:{fileName, assetHash, metadataUrl}, permissions:{transfer:true, revoke:true, share:true}}]).send({from: walletAddress, gas:1000000}); // Add credential to list of all credentials
-                    const credentialId = await usersDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), [{id:'1',data:{fileName, assetHash, metadataUrl}, permissions:{transfer:true, revoke:true, share:true}}]).call({from: web3.eth.defaultAccount, gas:1000000}) - 1 ; // Add credential to list of all credentials
+                    const tx = await usersDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), JSON.parse(viewers)).send({from: walletAddress, gas:1000000}); // Add credential to list of all credentials
+                    const credentialId = await usersDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), JSON.parse(viewers)).call({from: web3.eth.defaultAccount, gas:1000000}) - 1 ; // Add credential to list of all credentials
                     const credential =  await usersDeployedContract.methods.getCredentialById(credentialId).call({from: web3.eth.defaultAccount, gas:'1000000'}); // Add credential to list of all credentials
                     const newCredential = {id:credential.id, createdBy:credential.createdBy, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers.map((viewer)=>({id:viewer.id, data:{fileName:viewer.data.fileName, assetHash:viewer.data.assetHash, metadataUrl: viewer.data.metadataUrl}, permissions:{transfer: viewer.permissions.transfer, share:viewer.permissions.share, revoke: viewer.permissions.revoke}}))}
                     return res.json({credential:newCredential, success:true});

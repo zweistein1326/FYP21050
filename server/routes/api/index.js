@@ -29,7 +29,7 @@ router.post('/register', async (req, res, next) => {
         const tx = await usersDeployedContract.methods.createNewUser(username, walletAddress, publicKey).send({from: walletAddress, gas:1000000});
         // web3.eth.accounts.signTransaction(tx);
         const user = await usersDeployedContract.methods.getUserByUsername(username).call({from: web3.eth.defaultAccount, gas:1000000});
-        const returnUser = {id:user.id, username:user.username, publicKey:user.publicKey, credentialIds:user.credentialIds}
+        const returnUser = {id:user.id, username:user.username, publicKey:user.publicKey, credentialIds:user.credentialIds, publicKey: user.publicKey}
         return res.status(200).json({user: returnUser, success: true})
     }
     catch(e){
@@ -43,10 +43,22 @@ router.post('/login', async (req, res, next) => {
     try{
         const user = await usersDeployedContract.methods.getUserByUsername(username).call({from: web3.eth.defaultAccount, gas:100000});
         if(user.walletAddress.toLowerCase() == walletAddress.toLowerCase()){
-            const returnUser = {id:user.id, username:user.username, walletAddress:user.walletAddress, credentialIds:user.credentialIds}
+            const returnUser = {id:user.id, username:user.username, walletAddress:user.walletAddress, credentialIds:user.credentialIds, publicKey: user.publicKey}
             return res.status(200).json({user: returnUser, success:true});
         }
         return res.status(200).json({message:'Login Failed',success:false});
+    }
+    catch(e){
+        return res.status(200).json({message:e.message, success:false})
+    }
+})
+
+router.get('/getUserById', async (req, res, next)=>{
+    const userId = req.query.userId;
+    try{
+        const user = await usersDeployedContract.methods.getUserById(userId).call({from:web3.eth.defaultAccount, gas:100000});
+        const returnUser = {id:user.id, username:user.username, walletAddress:user.walletAddress, credentialIds:user.credentialIds, publicKey: user.publicKey}
+        return res.status(200).json({user: returnUser, success:true})
     }
     catch(e){
         return res.status(200).json({message:e.message, success:false})
@@ -59,7 +71,6 @@ router.get('/getFilesByUser',async(req,res,next)=>{
     const userId = req.query.userId;
     try{
         const user = await usersDeployedContract.methods.getUserById(userId).call({from:web3.eth.defaultAccount, gas:100000});
-        console.log(user)
 
         if(user.credentialIds.length>0){
             user.credentialIds.forEach(async(credentialId,index)=>{
@@ -87,8 +98,8 @@ router.post('/upload', async (req, res, next) => {
     // viewers = [{id:string, data:{fileName:string, assetHash:string, metadataUrl:string}, permissions:{revoke:boolean, share:boolean, transfer: boolean}}]
 
     try{
-        const tx = await usersDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), JSON.parse(viewers)).send({from: walletAddress, gas:1000000}); // Add credential to list of all credentials
-        const credentialId = await usersDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), JSON.parse(viewers)).call({from: web3.eth.defaultAccount, gas:1000000}) - 1 ; // Add credential to list of all credentials
+        const tx = await usersDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), viewers).send({from: walletAddress, gas:1000000}); // Add credential to list of all credentials
+        const credentialId = await usersDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), viewers).call({from: web3.eth.defaultAccount, gas:1000000}) - 1 ; // Add credential to list of all credentials
         const credential =  await usersDeployedContract.methods.getCredentialById(credentialId).call({from: web3.eth.defaultAccount, gas:'1000000'}); // Add credential to list of all credentials
         const newCredential = {id:credential.id, createdBy:credential.createdBy, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers.map((viewer)=>({id:viewer.id, data:{fileName:viewer.data.fileName, assetHash:viewer.data.assetHash, metadataUrl: viewer.data.metadataUrl}, permissions:{transfer: viewer.permissions.transfer, share:viewer.permissions.share, revoke: viewer.permissions.revoke}}))}
         return res.json({credential:newCredential, success:true});

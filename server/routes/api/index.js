@@ -42,7 +42,7 @@ router.post('/login', async (req, res, next) => {
     const {username, walletAddress} = req.body;
     try{
         const user = await usersDeployedContract.methods.getUserByUsername(username).call({from: web3.eth.defaultAccount, gas:100000});
-        if(user.walletAddress == walletAddress){
+        if(user.walletAddress.toLowerCase() == walletAddress.toLowerCase()){
             const returnUser = {id:user.id, username:user.username, walletAddress:user.walletAddress, credentialIds:user.credentialIds}
             return res.status(200).json({user: returnUser, success:true});
         }

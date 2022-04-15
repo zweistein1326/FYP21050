@@ -23,10 +23,10 @@ router.get('/', async(req,res,next)=>{
 // * Register
 router.post('/register', async (req, res, next) => {
     
-    const {username, walletAddress} = req.body;
+    const {username, walletAddress, publicKey} = req.body;
     
     try{
-        const tx = await usersDeployedContract.methods.createNewUser(username, walletAddress).send({from: walletAddress, gas:1000000});
+        const tx = await usersDeployedContract.methods.createNewUser(username, walletAddress, publicKey).send({from: walletAddress, gas:1000000});
         // web3.eth.accounts.signTransaction(tx);
         const user = await usersDeployedContract.methods.getUserByUsername(username).call({from: web3.eth.defaultAccount, gas:1000000});
         const returnUser = {id:user.id, username:user.username, publicKey:user.publicKey, credentialIds:user.credentialIds}
@@ -85,48 +85,13 @@ router.get('/getFilesByUser',async(req,res,next)=>{
 router.post('/upload', async (req, res, next) => {
     const { senderAddress, walletAddress, viewers } = req.body;
     // viewers = [{id:string, data:{fileName:string, assetHash:string, metadataUrl:string}, permissions:{revoke:boolean, share:boolean, transfer: boolean}}]
-    let fileSend = {};
 
     try{
-        if (req.files) {
-            const file = req.files.inputFile;
-            const fileName = file.name;
-            const filePath = __dirname + fileName;
-            file.mv(filePath, async (err) => {
-                if (err) {
-                    return res.status(500).send(err);
-                }
-                
-                const fileHash = await addFile(fileName, filePath);
-                fs.unlink(filePath, (err) => {
-                    if (err) {
-                        console.log("Error: Unable to delete file", err);
-                    }
-                });
-                const assetHash = fileHash.toString();
-                const metadataUrl = `https://ipfs.io/ipfs/${assetHash}`
-                try {
-                    // const user = await usersDeployedContract.methods.getUserById(senderAddress).call({from: web3.eth.defaultAccount, gas:100000});
-        
-                    // const encryptedAssetHash = await encrypt(assetHash, user.publicKey)
-                    // const encryptedMetadataUrl = await encrypt(metadataUrl, user.publicKey)
-
-                    // fileSend = { name: fileName, encryptedMetadataUrl, encryptedAssetHash }
-
-                    const tx = await usersDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), JSON.parse(viewers)).send({from: walletAddress, gas:1000000}); // Add credential to list of all credentials
-                    const credentialId = await usersDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), JSON.parse(viewers)).call({from: web3.eth.defaultAccount, gas:1000000}) - 1 ; // Add credential to list of all credentials
-                    const credential =  await usersDeployedContract.methods.getCredentialById(credentialId).call({from: web3.eth.defaultAccount, gas:'1000000'}); // Add credential to list of all credentials
-                    const newCredential = {id:credential.id, createdBy:credential.createdBy, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers.map((viewer)=>({id:viewer.id, data:{fileName:viewer.data.fileName, assetHash:viewer.data.assetHash, metadataUrl: viewer.data.metadataUrl}, permissions:{transfer: viewer.permissions.transfer, share:viewer.permissions.share, revoke: viewer.permissions.revoke}}))}
-                    return res.json({credential:newCredential, success:true});
-                }
-                catch (e) {
-                    return res.json({message:e.message, success: false});
-                }
-            })
-        }
-        else{
-            return res.status(200).json({message: 'Please upload a file', success: false});
-        }
+        const tx = await usersDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), JSON.parse(viewers)).send({from: walletAddress, gas:1000000}); // Add credential to list of all credentials
+        const credentialId = await usersDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), JSON.parse(viewers)).call({from: web3.eth.defaultAccount, gas:1000000}) - 1 ; // Add credential to list of all credentials
+        const credential =  await usersDeployedContract.methods.getCredentialById(credentialId).call({from: web3.eth.defaultAccount, gas:'1000000'}); // Add credential to list of all credentials
+        const newCredential = {id:credential.id, createdBy:credential.createdBy, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers.map((viewer)=>({id:viewer.id, data:{fileName:viewer.data.fileName, assetHash:viewer.data.assetHash, metadataUrl: viewer.data.metadataUrl}, permissions:{transfer: viewer.permissions.transfer, share:viewer.permissions.share, revoke: viewer.permissions.revoke}}))}
+        return res.json({credential:newCredential, success:true});
     }
     catch(e){
         return res.json({message:e.message, success: false});

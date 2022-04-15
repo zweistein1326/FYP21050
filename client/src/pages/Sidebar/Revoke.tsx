@@ -46,15 +46,12 @@ declare var window: any;
 
 
 const RevokePage = () => {
-  const navigate = useNavigate();
   const state = useSelector((s: any)=> s.auth) 
-  const [message, setMessage] = useState<string>('');
   const [submitRegister, { loading, error }] = useMutation(REGISTER);
   const [errorMessage, setErrorMessage] = useState<any>(null);
   const [defaultAccount, setDefaultAccount] = useState<any>(null);
   const [userBalance, setUserBalance] = useState<any>(null);
   const [connButtonText, setConnButtonText] = useState('Connect Wallet');
-  const [file,setFile] = useState<File | null>(null);
   const [receiverAddress, setReceiverAddress] = useState<any>('')
   const [credentials, setCredentials] = useState<any[]>([])
   const [docRevoke, setDocRevoke] = useState<any>('')
@@ -63,6 +60,7 @@ const RevokePage = () => {
   const [open, setOpen] = useState<any>(Boolean)
   const [openTransfer, setOpenTransfer] = useState<any>('')
   const [selectedDoc, setSelectedDoc] = useState<Boolean>(false)
+  const [selectedDocShare, setSelectedDocShare] = useState<Boolean>(false)
   const [value, setValue] = useState<any>("1");
   const [fileId, setFileId] = useState<any>('')
   const [dataRevoke, setDataRevoke] = useState<any>('1')
@@ -94,23 +92,25 @@ const RevokePage = () => {
     console.log(res.data,baseUrl+'getFilesByUser?userId'+user.user.id);
     res.data.credentials.forEach((i:any)=>{
       if(i.isValid === true){
-        i.viewers.forEach((item:any)=>{        
-          setCredentials(oldData=> [...oldData, item.data.fileName] )
-          if(item.permissions.revoke){
-            setRevokeCredentials(oldData=>[...oldData, item.data.fileName])
-          }
-          if(item.permissions.share){
-            setShareCredentials(oldData=>[...oldData, item.data.fileName])
-          }
-          if(item.permissions.transfer){
-            setTransferCredentials(oldData=>[...oldData, item.data.fileName])
+        setCredentials(oldData=> [...oldData, i.viewers[0].data.fileName])
+        i.viewers.forEach((item:any)=>{                
+          if(item.id===user.user.id){
+            console.log('checker',i)
+            if(item.permissions.revoke){
+              console.log('check checker')
+              setRevokeCredentials(oldData=>[...oldData, i])              
+            }
+            if(item.permissions.share){
+              setShareCredentials(oldData=>[...oldData, i])
+            }
+            if(item.permissions.transfer){
+              setTransferCredentials(oldData=>[...oldData, i])
+            }
           }
         })
         setCheckCredentials((oldData:any)=>[...oldData, i])
         console.log(i)
-        
-      }
-      
+      }      
     })
   }
 
@@ -123,20 +123,6 @@ const RevokePage = () => {
   }
 
   
-  // const getCredentials = async () =>{
-  //   const retrievedString :any = localStorage.getItem('user') || '';
-  //   const user = JSON.parse(retrievedString);
-  //   const res : AxiosResponse<any> = await axios.get(baseUrl+'getFilesByUser?userId='+user.user.id)
-  //   console.log(res.data,baseUrl+'getFilesByUser?userId'+user.user.id);
-  //   res.data.credentials.forEach((i:any)=>{
-  //     if(i.isValid === true){
-  //       setCredentials(oldData=>[...oldData, i.data[0]] )
-  //     setCheckCredentials((oldData:any)=>[...oldData, i])
-  //     }
-  //   })
-    
-  // }
-
   const handleClickOpen =()=>{
     setOpen(true)
   }
@@ -181,16 +167,7 @@ const RevokePage = () => {
   const handleSubmitTransfer = async (event:any) =>{
     event.preventDefault();
         try{
-            var credentialId = '';
-            checkCredentials.map((i:any)=>{    
-              
-              i.viewers.forEach((item:any)=>{
-                if(item.data.fileName === selectedDoc){
-                  credentialId = i.id
-                console.log('check')
-                }
-              })              
-            })
+            var credentialId = setSelectedDoc;
             const retrievedString :any = localStorage.getItem('user') || '';
             const user = JSON.parse(retrievedString);
     
@@ -220,14 +197,8 @@ const RevokePage = () => {
     var credentialId = '' 
     const retrievedString :any = localStorage.getItem('user') || '';
     const user = JSON.parse(retrievedString);
-    checkCredentials.forEach((i:any)=>{    
-        console.log('item',i)
-        // i.forEach((item:any)=>{
-          if(i.viewers[0].data.fileName === docRevoke){
-            credentialId = i.id
-          }
-        // })
-    })
+    credentialId = docRevoke
+
     const payload = {
       credentialId, 
       senderAddress: user.user.id, 
@@ -249,8 +220,6 @@ const RevokePage = () => {
     }
   }
 
-  // const [age, setAge] = React.useState('');
-
   const handleChangeRevokeData = (event: SelectChangeEvent) => {
     setDataRevoke(event.target.value);
     console.log(event.target.value)
@@ -265,14 +234,12 @@ const RevokePage = () => {
 
   const handleSelectiveDisclosure = async (event:any) =>{
     event.preventDefault();
-    var credentialId = '' 
+    var credentialId = selectedDocShare
     var fileName = ''
     var assetHash = ''
     var metadataUrl = ''
     const retrievedString :any = localStorage.getItem('user') || '';
     const user = JSON.parse(retrievedString);
-    
-    
 
     checkCredentials.forEach((i:any)=>{    
         console.log('item',i)
@@ -280,19 +247,18 @@ const RevokePage = () => {
         assetHash = i.viewers[0].data.assetHash
         metadataUrl = i.viewers[0].data.metadataUrl
         console.log('check',i, )
-        i.viewers.forEach((item:any)=>{
-          if(item.data.fileName === selectedDoc){
-            credentialId = i.id
-          console.log('check')
-          }
-        })
     })
+    
+    var dR = dataRevoke === '1'?true:false
+    var dS = dataShare === '1'?true:false
+    var dT = dataTransfer === '1'? true: false 
+
 
     const viewers = [{
       id: receiverAddress , 
       data:{
           fileName:fileName, assetHash:assetHash, metadataUrl:metadataUrl},
-          permissions:{revoke:dataRevoke, share:dataShare, transfer: dataTransfer}
+          permissions:{revoke:dR, share:dS, transfer: dT}
     }]
 
 
@@ -303,7 +269,6 @@ const RevokePage = () => {
       walletAddress: defaultAccount,
     }
 
-    // const payload ={credentialId, viewers, senderId, walletAddress}
     console.log('payload',payload)
     const res : AxiosResponse<any> = await axios.post(baseUrl+'addViewer', payload)
     console.log('result of send',res.data)
@@ -373,7 +338,7 @@ const RevokePage = () => {
         </DialogActions>
       </Dialog>
       <br></br>
-      <Typography variant='h5' display="block" gutterBottom>Revocation</Typography>
+      <Typography variant='h5' display="block" gutterBottom>Manage</Typography>
       
       
     <Container component="main" >
@@ -409,9 +374,19 @@ const RevokePage = () => {
         disablePortal
         id="combo-box-demo"
         options={revokeCredentials}
-        onChange={(event, value) => setDocRevoke(value)}                        
+        // options={credentials}
+        onChange={(event, value) => {setDocRevoke(value.id);console.log('vv',value.id)}}                        
         renderInput={(params) => <TextField {...params} label="Credential"  />}
         size='small'
+        getOptionLabel={option => option.viewers[0].data.fileName}
+        renderOption={(props, option) => {
+          return (
+            <li {...props} key={option.id}>
+              {option.viewers[0].data.fileName}
+              {/* {console.log(option)} */}
+            </li>
+          );
+        }}
     />
     </Grid>
     <Grid item xs={4}>
@@ -449,10 +424,21 @@ const RevokePage = () => {
                           disablePortal
                           id="combo-box-demo"
                           options={transferCredentials}
-                          onChange={(event, value) => setSelectedDoc(value)}
+                          // onChange={(event, value) => setSelectedDoc(value)}
+                          onChange={(event, value) => {setSelectedDoc(value.id);console.log('vv',value.id)}}                        
+
                           // sx={{ width: }}
                           renderInput={(params) => <TextField {...params} label="Credential"  />}
                           size='small'
+                          getOptionLabel={option => option.viewers[0].data.fileName}
+                          renderOption={(props, option) => {
+                            return (
+                              <li {...props} key={option.id}>
+                                {option.viewers[0].data.fileName}
+                                {/* {console.log(option)} */}
+                              </li>
+                            );
+                          }}
                           />
                           </Grid>
                         
@@ -486,11 +472,22 @@ const RevokePage = () => {
                       <Autocomplete
                           disablePortal
                           id="combo-box-demo"
-                          options={credentials}
-                          onChange={(event, value) => setSelectedDoc(value)}
+                          options={shareCredentials}
+                          // onChange={(event, value) => setSelectedDocShare(value.id)}
+                          onChange={(event, value) => {setSelectedDocShare(value.id);console.log('vv',value.id)}}                        
+
                           // sx={{ width: }}
                           renderInput={(params) => <TextField {...params} label="Credential"  />}
                           size='small'
+                          getOptionLabel={option => option.viewers[0].data.fileName}
+                          renderOption={(props, option) => {
+                            return (
+                              <li {...props} key={option.id}>
+                                {option.viewers[0].data.fileName}
+                                {/* {console.log(option)} */}
+                              </li>
+                            );
+                          }}
                           />
                           </Grid>
                         
@@ -513,7 +510,7 @@ const RevokePage = () => {
                         <Typography>Choose Revocation Permission Status</Typography>
                         </Grid>
                         <Grid item xs={6}>
-                        {/* <InputLabel id="demo-simple-select-label">Status</InputLabel> */}
+                        <InputLabel id="demo-simple-select-label">Status</InputLabel>
                           <Select
                             labelId="demo-simple-select-label"
                             id="demo-simple-select"
@@ -532,7 +529,7 @@ const RevokePage = () => {
                         <Typography>Choose Share Permission Status</Typography>
                         </Grid>
                         <Grid item xs={6}>
-                        {/* <InputLabel id="demo-simple-select-label">Status</InputLabel> */}
+                        <InputLabel id="demo-simple-select-label">Status</InputLabel>
                           <Select
                             labelId="demo-simple-select-label"
                             id="demo-simple-select"
@@ -547,14 +544,14 @@ const RevokePage = () => {
                           </Select>
                         </Grid>
                         <Grid item xs={6}>
-                        <Typography>Choose Revocation Permission Status</Typography>
+                        <Typography>Choose Transfer Permission Status</Typography>
                         </Grid>
                         <Grid item xs={6}>
-                        {/* <InputLabel id="demo-simple-select-label">Status</InputLabel> */}
+                        <InputLabel id="demo-simple-select-label">Status</InputLabel>
                           <Select
                             labelId="demo-simple-select-label"
                             id="demo-simple-select"
-                            value={dataRevoke}
+                            value={dataTransfer}
                             label="Status"
                             onChange={(e:any)=>handleChangeTransferData(e)}
                             size="small"

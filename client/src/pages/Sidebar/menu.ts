@@ -12,12 +12,12 @@ export const DRAWER_LIST: DrawerItem[] = [
   },
   {
     route: ROUTES.upload,
-    literal: 'Upload and Transfer',
+    literal: 'Upload',
     Icon: UploadIcon,
   },
   {
     route: ROUTES.revoke,
-    literal: 'Revoke',
+    literal: 'Manage',
     Icon: CancelPresentationIcon,
   },
 ];

@@ -19,8 +19,6 @@ import { useNavigate } from 'react-router-dom';
 import { LOGIN } from '../graphql';
 import {connect, useDispatch, useSelector} from 'react-redux';
 import { login } from '../actions/auth';
-import { User } from '../models/User';
-import { privateEncrypt } from 'crypto';
 import axios, { AxiosResponse } from 'axios';
 
 declare var window: any;
@@ -78,7 +76,7 @@ const Login = (props:any) => {
       console.log(payload)
       const res : AxiosResponse<any> = await axios.post(baseUrl+'login', payload)
       console.log('result',res.data)
-      if(res.data.success === true){
+      if(res.data.success){
         console.log(username,'username')
         localStorage.setItem('user', JSON.stringify(res.data));
         dispatch(login(payloadStore))

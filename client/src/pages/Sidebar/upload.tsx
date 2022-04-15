@@ -132,16 +132,6 @@ const UploadPage = () => {
   const handleSubmitTransfer = async (event:any) =>{
     event.preventDefault();
         try{
-            // var credentialId = '';
-            // checkCredentials.map((i:any)=>{    
-              
-            //   i.viewers.forEach((item:any)=>{
-            //     if(item.data.fileName === selectedDoc){
-            //       credentialId = i.id
-            //     console.log('check')
-            //     }
-            //   })              
-            // })
             const retrievedString :any = localStorage.getItem('user') || '';
             const user = JSON.parse(retrievedString);
     
@@ -255,7 +245,7 @@ const UploadPage = () => {
           alignItems: 'center',
         }}
       >
-      <Typography variant='h5' display="block" gutterBottom>Upload and Transfer</Typography>
+      <Typography variant='h5' display="block" gutterBottom>Upload</Typography>
       <Grid container>
       <Grid item xs={12}>
         <Box component="form" noValidate sx={{ mt: 1, marginBottom:3 }}>
@@ -311,25 +301,8 @@ const UploadPage = () => {
                     </Typography>
                     
                     <Box component="form" onSubmit={handleSubmitTransfer} noValidate sx={{ mt: 1  }}>
-                    <Grid container spacing={2} >
-                      {/* <Grid item xs={6}>
-                      <Typography variant='subtitle1'>
-                      Choose the credential
-                      </Typography>
-                      </Grid> */}
-                      <br></br>
-                      {/* <Grid item xs={6}>
-                      <Autocomplete
-                          disablePortal
-                          id="combo-box-demo"
-                          options={credentials}
-                          onChange={(event, value) => setSelectedDoc(value)}
-                          // sx={{ width: }}
-                          renderInput={(params) => <TextField {...params} label="Credential"  />}
-                          size='small'
-                          />
-                          </Grid> */}
-                        
+                    <Grid container spacing={2} >                      
+                      <br></br>                        
                       </Grid>
                       <br></br>
                     <Grid container spacing={2}>
@@ -347,53 +320,7 @@ const UploadPage = () => {
                     </Box>
                   <br></br>
                 </Card>
-
-                </Grid>
-                {/* <Grid item xs={6}> */}
-                {/* <Card sx={{width: '100%'}}>
-                  <br></br>
-                    <Typography variant='h6' display="block" gutterBottom color="text.secondary" style={{ fontWeight: 600 }}>
-                        Transfer
-                    </Typography>
-                    <CardContent>
-                    <Box component="form" onSubmit={handleSubmitTransfer} noValidate sx={{ mt: 1  }}>
-                    <Grid container spacing={2} >
-                      <Grid item xs={6}>
-                      <Typography variant='subtitle1'>
-                      Choose the credential
-                      </Typography>
-                      </Grid>
-                      <br></br>
-                      <Grid item xs={6}>
-                      <Autocomplete
-                          disablePortal
-                          id="combo-box-demo"
-                          options={credentials}
-                          onChange={(event, value) => setSelectedDoc(value)}
-                          // sx={{ width: }}
-                          renderInput={(params) => <TextField {...params} label="Credential"  />}
-                          size='small'
-                          />
-                          </Grid>
-                        
-                      </Grid>
-                      <br></br>
-                    <Grid container spacing={2}>
-                        <Grid item xs={6}>
-                            <Typography>Enter address of receiver</Typography>
-                        </Grid>
-                        <Grid item xs={6}>
-                        <TextField size="small" id="outlined-basic" label="Address" variant="outlined" value={receiverAddress} onChange={(e)=>setReceiverAddress(e.target.value)} />      
-                        </Grid>
-                        <Grid item xs ={12}>
-                        <Button type='submit' variant="contained">Transfer</Button>
-                        </Grid>
-                    </Grid>
-                    </Box>
-                    
-                    </CardContent>
-                    </Card> */}
-                {/* </Grid>   */}
+                </Grid>                
                 </Grid>
               
         </Grid>

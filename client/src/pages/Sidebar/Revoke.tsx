@@ -167,15 +167,41 @@ const RevokePage = () => {
   const handleSubmitTransfer = async (event:any) =>{
     event.preventDefault();
         try{
-            var credentialId = setSelectedDoc;
+            var credentialId = selectedDoc;
             const retrievedString :any = localStorage.getItem('user') || '';
             const user = JSON.parse(retrievedString);
     
+            const r : AxiosResponse<any> = await axios.get(baseUrl+'getCredential?credentialId='+credentialId)
+            let fileName = "";
+            let assetHash = "";
+            let metadataUrl = "";
+
+            r.data.credential.viewers.forEach((item:any)=>{
+              if (item.id == user.user.id){
+                fileName = item.data.fileName;
+                assetHash = item.data.assetHash;
+                metadataUrl = item.data.metadataUrl;
+              }
+            })
+            const viewer = {
+              id: receiverAddress, 
+              data:{
+                  fileName:fileName,
+                  assetHash:assetHash,
+                  metadataUrl:metadataUrl
+                },
+              permissions: {
+                transfer: true,
+                share: true,
+                revoke: true
+              }
+            }
             const payload = {
               from: user.user.id, 
               to:receiverAddress, 
               credentialId:credentialId, 
-              walletAddress: defaultAccount
+              walletAddress: defaultAccount,
+              viewer: viewer
             }
             console.log(payload)
             const res : AxiosResponse<any> = await axios.post(baseUrl+'transfer', payload)

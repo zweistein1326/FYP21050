@@ -21,6 +21,8 @@ import Layout from './Layout'
 import { login } from '../../actions/auth';
 import { useCookies } from 'react-cookie';
 import { connect, useDispatch, useSelector } from 'react-redux';
+import moment from 'moment';
+import {encrypt, decrypt} from '../../components/rsa/utils';
 
 
 declare var window: any;
@@ -55,7 +57,7 @@ const Account = () => {
     const res : AxiosResponse<any> = await axios.get(baseUrl+'getFilesByUser?userId='+user.user.id)
     console.log(res.data,baseUrl+'getFilesByUser?userId'+user.user.id);
     var num = 1
-    res.data.credentials.forEach((i:any)=>{
+    res.data.credentials.forEach( async (i:any)=>{
       var doc = ''
       var link = ''
       var assetHash = ''
@@ -85,13 +87,18 @@ const Account = () => {
         doc = item.data.fileName
         link = item.data.metadataUrl
         assetHash = item.data.assetHash
-      })
+      });
+
+      const resp : AxiosResponse<any> = await axios.get(baseUrl+'getUserById?userId='+i.currentOwner);
+
+      const pks :any = localStorage.getItem('privateKey' + user.user.username) ? localStorage.getItem('privateKey' + user.user.username) : "";
+      const privateKey = (pks === "") ? {} : JSON.parse(pks);
       
       setDataRows(oldData=>[...oldData, {
         id:num, 
-        owner: i.currentOwner,
+        owner: resp.data.user.username,
         doc:i.viewers[0].data.fileName, 
-        // date: date,
+        date: i.createdAt,
         link: i.viewers[0].data.metadataUrl,
         assetHash: i.viewers[0].data.assetHash, 
         valid:i.isValid,
@@ -107,7 +114,7 @@ const Account = () => {
   const columns: GridColDef[] = [
       {field: "id",headerName:'No.', width:50}, 
       {field: "owner",headerName:'Owner', width:100}, 
-      // {field: "date", headerName:'Date', width:100},
+      {field: "date", headerName:'UNIX Timestamp', width:150},
       {field:"doc", headerName:'Document', minWidth:200, flex:2},
       {field: "link", headerName:'Link', minWidth: 200, flex:2},
       {field: "assetHash", headerName:'Asset Hash', minWidth: 200, flex:2},

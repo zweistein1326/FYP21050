@@ -29,7 +29,8 @@ import axios, { AxiosResponse } from 'axios';
 import Layout from './Layout'
 import { AppState } from '../../store/configureStore'
 import { connect, useSelector } from 'react-redux';
-import {create} from 'ipfs-http-client'
+import {create} from 'ipfs-http-client';
+import {encrypt, decrypt} from '../../components/rsa/utils';
 
 
 
@@ -56,7 +57,8 @@ const UploadPage = () => {
   const [selectedDoc, setSelectedDoc] = useState<Boolean>(false)
   const [filePlaceholder, setFilePlaceholder] = useState<any>('Upload File')
   const [url, setUrlArr] = useState<any>('')
-  const [dataUpload, setDataUpload] = useState<any>('')
+  // const [credentialId, setDataUpload] = useState<any>('')
+  const [credentialId, setCredentialId] = useState<any>('')
   const baseUrl = 'http://127.0.0.1:8000/'
 
   const handleClickOpen =()=>{
@@ -134,12 +136,39 @@ const UploadPage = () => {
         try{
             const retrievedString :any = localStorage.getItem('user') || '';
             const user = JSON.parse(retrievedString);
-    
+
+            const r : AxiosResponse<any> = await axios.get(baseUrl+'getCredential?credentialId='+credentialId) 
+            let fileName = "";
+            let assetHash = "";
+            let metadataUrl = "";
+
+            r.data.credential.viewers.forEach((item:any)=>{
+              if (item.id == user.user.id){
+                fileName = item.data.fileName;
+                assetHash = item.data.assetHash;
+                metadataUrl = item.data.metadataUrl;
+              
+              }
+            })
+            const viewer = {
+              id: receiverAddress, 
+              data:{
+                  fileName:fileName,
+                  assetHash:assetHash,
+                  metadataUrl:metadataUrl
+                },
+              permissions: {
+                transfer: true,
+                share: true,
+                revoke: true
+              }
+            }
             const payload = {
               from: user.user.id, 
               to:receiverAddress, 
-              credentialId: dataUpload, 
-              walletAddress: defaultAccount
+              credentialId:credentialId, 
+              walletAddress: defaultAccount,
+              viewer: viewer
             }
             console.log(payload)
             const res : AxiosResponse<any> = await axios.post(baseUrl+'transfer', payload)
@@ -166,21 +195,40 @@ const UploadPage = () => {
             const url = `https://ipfs.infura.io/ipfs/${created.path}`;
             //const viewers = [{id:string, data:{fileName:string, assetHash:string, metadataUrl:string}, permissions:{revoke:boolean, share:boolean, transfer: boolean}}]
             setUrlArr(url);
+            
+            const pks :any = localStorage.getItem('publicKey' + user.user.username) ? localStorage.getItem('publicKey' + user.user.username) : "";
+            const publicKey = (pks === "") ? {} : JSON.parse(pks);
+
+            // const ENCassetHash = ;
+            // const ENCmetadataUrl = ;
+            
             const viewers = [{
               id: user.user.id , 
               data:{
-                  fileName:file.name, assetHash:created.cid.toString(), metadataUrl:url},
+                  fileName: file.name, 
+                  assetHash: created.cid.toString(),
+                  metadataUrl: url
+                },
                   permissions:{revoke:true, share:true, transfer: true}
             }]
-            const formData = new FormData()
-            formData.append('inputFile',file) 
-            formData.append('walletAddress', defaultAccount)
-            formData.append('senderAddress',user.user.id)     
-            formData.append('viewers', JSON.stringify(viewers))
-            const res : AxiosResponse<any> = await axios.post(baseUrl+'upload', formData)
+            // const formData = new FormData()
+            // formData.append('inputFile',file) 
+            // formData.append('walletAddress', defaultAccount)
+            // formData.append('senderAddress',user.user.id)     
+            // formData.append('viewers', JSON.stringify(viewers))
+
+            const payload = {
+              walletAddress: defaultAccount,
+              senderAddress: user.user.id,
+              viewers: JSON.stringify(viewers),
+            }
+            console.log("payload")
+            console.log(payload);
+            const res : AxiosResponse<any> = await axios.post(baseUrl+'upload', payload)
             console.log('result of send',res.data)
+            
             if(res.data.success === true){
-              setDataUpload(res.data.credential.id)
+              setCredentialId(res.data.credential.id)
               console.log(res.data.credential.id)
               console.log("check")
               handleClickOpen()

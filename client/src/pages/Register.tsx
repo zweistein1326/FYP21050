@@ -23,8 +23,11 @@ import { User } from '../models/User';
 import axios, { AxiosResponse } from 'axios';
 import { privateEncrypt } from 'crypto';
 import { useCookies } from 'react-cookie';
-const Web3 = require('web3')
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:3000"))
+import {encrypt, decrypt} from '../components/rsa/utils';
+import rsa from 'js-crypto-rsa';
+const Web3 = require('web3');
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:3000"));
+
 
 
 declare var window: any;
@@ -67,31 +70,37 @@ const Login = (props:any) => {
     event.preventDefault();
 
     const baseUrl = 'http://127.0.0.1:8000/'
-    const keyAccount = await web3.eth.accounts.create([])
-    console.log('key account',keyAccount)
+    
 
-    const payload = {
+    rsa.generateKey(2048).then( async (key:any)=>{
+      const publicKey = key.publicKey;
+      const privateKey = key.privateKey;
+
+      console.log('publicKey', publicKey);
+      console.log('privateKey', privateKey);
+
+      const payload = {
+          username: username,
+          walletAddress: address,
+          publicKey: "0x1234"
+      }
+
+      const payloadStore = {
         username: username,
-        walletAddress: address,
-    }
+        publicKey: address
+      }
+      // Register
+      const res : AxiosResponse<any> = await axios.post(baseUrl+'register', payload)
+      console.log('result', res.data);
 
-    const payloadStore = {
-      username: username,
-      publicKey: address
-    }
-    // Register
-    const res : AxiosResponse<any> = await axios.post(baseUrl+'register', payload)
-    console.log('result', res.data)
-
-    if (res.data.success === true){
-      dispatch(login(payloadStore))
-      localStorage.setItem('user', JSON.stringify(res.data));
-      localStorage.setItem('keyAccount',JSON.stringify(keyAccount))
-      setCookies('username', username, {path:'/'})
-      navigate('/home', {state: payload}) 
-    }else{
-      <Alert severity="error">Invalid Registeration.</Alert>
-    }    
+      if (res.data.success === true){
+        dispatch(login(payloadStore))
+        localStorage.setItem('user', JSON.stringify(res.data));
+        localStorage.setItem('publicKey'+username, JSON.stringify(publicKey));
+        localStorage.setItem('privateKey'+username, JSON.stringify(privateKey));
+        navigate('/home', {state: payload}) 
+      }
+    });    
   };
 
   return (

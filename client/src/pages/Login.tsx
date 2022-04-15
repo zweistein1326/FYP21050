@@ -44,7 +44,7 @@ const Login = (props:any) => {
 
   const checkKey=async()=>{
     const retrievedString :any = localStorage.getItem('keyAccount') || '';
-    const key = JSON.parse(retrievedString);
+    const key = retrievedString ? JSON.parse(retrievedString) : {} ;
     console.log('check storage',key.privateKey, typeof(key.privateKey), typeof(username))
   }
 

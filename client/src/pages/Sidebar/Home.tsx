@@ -56,14 +56,50 @@ const Account = () => {
     console.log(res.data,baseUrl+'getFilesByUser?userId'+user.user.id);
     var num = 1
     res.data.credentials.forEach((i:any)=>{
+
       var d = new Date(i.createdAt*1000)
       console.log('date',d.getMonth(), d)
+      var doc = ''
+      var date = d.getDate()+'/'+d.getMonth()+'/'+d.getFullYear()
+      var link = ''
+      var assetHash = ''
+
+      // i.viewers.forEach((item:any)=>{
+      //   console.log('item',item)
+      //   doc = item.data.fileName
+      //   link = item.data.metadataUrl
+      //   assetHash = item.data.assetHash
+      // })
+      var t = ''
+      if(i.viewers[0].permissions.transfer){
+        t = 'Allowed'
+      }else{
+        t = 'Disallowed'
+      }
+      var s = ''
+      if(i.viewers[0].permissions.share){
+        s = 'Allowed'
+      }else{
+        s = 'Disallowed'
+      }
+      var r = ''
+      if(i.viewers[0].permissions.revoke){
+        r = 'Allowed'
+      }else{
+        r = 'Disallowed'
+      }
+
       setDataRows(oldData=>[...oldData, {
         id:num, 
-        doc:i.data[0], 
-        link:i.data[2],
-        assetHash: i.data[1], 
-        valid:i.isValid
+        owner: i.currentOwner,
+        doc:i.viewers[0].data.fileName, 
+        date: date,
+        link: i.viewers[0].data.metadataUrl,
+        assetHash: i.viewers[0].data.assetHash, 
+        valid:i.isValid,
+        transfer: t,
+        revoke: r,
+        share: s, 
       }] )
       num = num + 1
     })
@@ -72,10 +108,16 @@ const Account = () => {
   const rows = dataRows;
   const columns: GridColDef[] = [
       {field: "id",headerName:'No.', width:50}, 
+      {field: "owner",headerName:'Owner', width:100}, 
+      {field: "date", headerName:'Date', width:100},
       {field:"doc", headerName:'Document', minWidth:200, flex:2},
       {field: "link", headerName:'Link', minWidth: 200, flex:2},
       {field: "assetHash", headerName:'Asset Hash', minWidth: 200, flex:2},
-      {field: "valid", headerName:'Valid', minWidth: 50, flex:2},
+      {field: "valid", headerName:'Valid', minWidth: 100, flex:2},
+      {field: "transfer",headerName:'Transfer', width:100}, 
+      {field: "revoke",headerName:'Revoke', width:100}, 
+      {field: "share",headerName:'Share', width:100}, 
+
     ]
 
   return (

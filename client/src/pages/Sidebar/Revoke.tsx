@@ -107,6 +107,7 @@ const RevokePage = () => {
     console.log(res.data,baseUrl+'getFilesByUser?userId'+user.user.id);
     res.data.credentials.forEach((i:any)=>{
       if(i.isValid === true){
+        console.log('itemaas',i)
         setCredentials(oldData=> [...oldData, i.viewers[0].data.fileName])
         i.viewers.forEach((item:any)=>{                
           if(item.id===user.user.id){

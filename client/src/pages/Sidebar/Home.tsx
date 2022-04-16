@@ -48,7 +48,7 @@ const Account = () => {
         setName(user.user.username)
     }
     getCredentials();
-  },[state])
+  },[])
 
   let privateKey: any;
   const retrievedString :any = localStorage.getItem('user');
@@ -88,56 +88,73 @@ const Account = () => {
           }else{
             r = 'Disallowed'
           }
-    
+          
         }
         console.log('item',item)
         doc = item.data.fileName
-        link = item.data.metadataUrl
-        assetHash = item.data.assetHash
+        // link = item.data.metadataUrl
+        // assetHash = item.data.assetHash
       });
 
       const resp : AxiosResponse<any> = await axios.get(baseUrl+'getUserById?userId='+i.currentOwner);
       console.log(privateKey)
-      
-      i.viewers.forEach(async (it: any) => {
+      for(let item=0; item<i.viewers.length; item++){
         let dmrl:any, ah:any;
         try{
-          console.log(it.data.assetHash, it.data.metadataUrl); 
-          ah = await decrypt(it.data.assetHash, privateKey);
-         console.log(ah)
+          // console.log(it.data.assetHash, it.data.metadataUrl); 
+          ah = await decrypt(i.viewers[item].data.assetHash, privateKey);
+        //  console.log(ah)
         }catch(e){
           console.log(e)
         }
         try{
-            dmrl = await decrypt(it.data.metadataUrl, privateKey);
-            console.log(dmrl)
+            dmrl = await decrypt(i.viewers[item].data.metadataUrl, privateKey);
+            // console.log(dmrl)
         }
         catch(e){
           console.log(e)
         }
-        if (it.id === user.user.id) {
-          setDataRows((oldData)=>[...oldData, {
-            id:num, 
-            owner: resp.data.user.username,
-            doc:it.data.fileName, 
-            date: i.createdAt,
-            link: dmrl,
-            assetHash: ah, 
-            valid:i.isValid,
-            transfer: t,
-            revoke: r,
-            share: s, 
-            key: Math.random()*100000
-          }] )
-        }
-      })
+
+          if (i.viewers[item].id === user.user.id) {
+            if(i.viewers[item].permissions.transfer){
+              t = 'Allowed'
+            }else{
+              t = 'Disallowed'
+            }
+            if(i.viewers[item].permissions.share){
+              s = 'Allowed'
+            }else{
+              s = 'Disallowed'
+            }
+            if(i.viewers[item].permissions.revoke){
+              r = 'Allowed'
+            }else{
+              r = 'Disallowed'
+            }
+            
+            setDataRows((oldData)=>[...oldData, {
+              no:num, 
+              owner: resp.data.user.username,
+              doc:i.viewers[item].data.fileName, 
+              date: i.createdAt,
+              link: dmrl,
+              assetHash: ah, 
+              valid:i.isValid,
+              transfer: t,
+              revoke: r,
+              share: s, 
+              id: Math.floor(Math.random()*100000)
+            }] )
+            break
+          }
+      }
       num = num + 1
     })
   }
   
   const rows = dataRows;
   const columns: GridColDef[] = [
-      {field: "id",headerName:'No.', width:50}, 
+      {field: "no",headerName:'No.', width:50}, 
       {field: "owner",headerName:'Owner', width:100}, 
       {field: "date", headerName:'UNIX Timestamp', width:150},
       {field:"doc", headerName:'Document', minWidth:200, flex:2},

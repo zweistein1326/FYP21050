@@ -303,50 +303,124 @@ const RevokePage = () => {
 
   const handleSelectiveDisclosure = async (event:any) =>{
     event.preventDefault();
-    var credentialId = selectedDocShare
-    var fileName = ''
-    var assetHash = ''
-    var metadataUrl = ''
-    const retrievedString :any = localStorage.getItem('user') || '';
-    const user = JSON.parse(retrievedString);
+    try {
+      const credential : AxiosResponse<any> = await axios.get(baseUrl+'getCredential?credentialId='+selectedDocShare) ;
+      const receiver : AxiosResponse<any> = await axios.get(baseUrl+'getUserById?userId='+receiverAddress);           
+      let fileName = "";
+      let assetHash = "";
+      let metadataUrl = "";
+      let decryptAssetHash: any="";
+      let decryptMetadataUrl:any;
 
-    checkCredentials.forEach((i:any)=>{    
-        console.log('item',i)
-        fileName = i.viewers[0].data.fileName
-        assetHash = i.viewers[0].data.assetHash
-        metadataUrl = i.viewers[0].data.metadataUrl
-        console.log('check',i, )
-    })
+      credential.data.credential.viewers.forEach(async (item: any, index: any) => {
+      console.log(item);
+      if (item.id == user.user.id) {
+        fileName = item.data.fileName;
+        const receiverPublicKey = JSON.parse(receiver.data.user.publicKey)
+        try {
+          decryptAssetHash = await decrypt(item.data.assetHash, privateKey);
+        } catch (e) {
+          console.log(e)
+        }
+        try {
+          decryptMetadataUrl = await decrypt(item.data.metadataUrl, privateKey);
+        } catch (e) {
+          console.log(e)
+        }
+        console.log(decryptAssetHash, decryptMetadataUrl)
+        try {
+          assetHash = await encrypt(decryptAssetHash, receiverPublicKey)
+        } catch (e) {
+          console.log(e)
+        }
+        try {
+          metadataUrl = await encrypt(decryptMetadataUrl, receiverPublicKey)
+        } catch (e) {
+          console.log(e)
+        }
+        console.log(assetHash, metadataUrl)
+
+        var dR = dataRevoke === '1'?true:false
+        var dS = dataShare === '1'?true:false
+        var dT = dataTransfer === '1'? true: false 
+        const viewers = [{
+          id: receiverAddress , 
+          data:{
+              fileName:fileName, 
+              assetHash:assetHash, 
+              metadataUrl:metadataUrl},
+              permissions: {
+                revoke:dR,
+                share:dS,
+                transfer: dT
+              }
+        }]
+
+        const payload = {
+          credentialId: selectedDocShare, 
+          senderId: user.user.id, 
+          viewers: viewers, 
+          walletAddress: defaultAccount,
+        }
+
+        console.log('payload',payload)
+        const res : AxiosResponse<any> = await axios.post(baseUrl+'addViewer', payload)
+        console.log('result of send',res.data)
+        if(res.data.success){
+          handleClickOpenSelectiveDisclosure()
+          setCheckCredentials([])
+          setCredentials([])
+          getCredentials()
+        }
+      }
+      })
+    } catch(err) {
+      console.log(err)
+    }
+    // var credentialId = selectedDocShare
+    // var fileName = ''
+    // var assetHash = ''
+    // var metadataUrl = ''
+    // const retrievedString :any = localStorage.getItem('user') || '';
+    // const user = JSON.parse(retrievedString);
+
+    // checkCredentials.forEach((i:any)=>{    
+    //     console.log('item',i)
+    //     fileName = i.viewers[0].data.fileName
+    //     assetHash = i.viewers[0].data.assetHash
+    //     metadataUrl = i.viewers[0].data.metadataUrl
+    //     console.log('check',i, )
+    // })
     
-    var dR = dataRevoke === '1'?true:false
-    var dS = dataShare === '1'?true:false
-    var dT = dataTransfer === '1'? true: false 
+    // var dR = dataRevoke === '1'?true:false
+    // var dS = dataShare === '1'?true:false
+    // var dT = dataTransfer === '1'? true: false 
 
 
-    const viewers = [{
-      id: receiverAddress , 
-      data:{
-          fileName:fileName, assetHash:assetHash, metadataUrl:metadataUrl},
-          permissions:{revoke:dR, share:dS, transfer: dT}
-    }]
+    // const viewers = [{
+    //   id: receiverAddress , 
+    //   data:{
+    //       fileName:fileName, assetHash:assetHash, metadataUrl:metadataUrl},
+    //       permissions:{revoke:dR, share:dS, transfer: dT}
+    // }]
 
 
-    const payload = {
-      credentialId, 
-      senderId: user.user.id, 
-      viewers: viewers, 
-      walletAddress: defaultAccount,
-    }
+    // const payload = {
+    //   credentialId, 
+    //   senderId: user.user.id, 
+    //   viewers: viewers, 
+    //   walletAddress: defaultAccount,
+    // }
 
-    console.log('payload',payload)
-    const res : AxiosResponse<any> = await axios.post(baseUrl+'addViewer', payload)
-    console.log('result of send',res.data)
-    if(res.data.success){
-      handleClickOpenSelectiveDisclosure()
-      setCheckCredentials([])
-      setCredentials([])
-      getCredentials()
-    }
+    // console.log('payload',payload)
+    // const res : AxiosResponse<any> = await axios.post(baseUrl+'addViewer', payload)
+    // console.log('result of send',res.data)
+    // if(res.data.success){
+    //   handleClickOpenSelectiveDisclosure()
+    //   setCheckCredentials([])
+    //   setCredentials([])
+    //   getCredentials()
+    // }
   }
 
   

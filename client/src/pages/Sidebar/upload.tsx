@@ -159,7 +159,7 @@ const UploadPage = () => {
             let decryptMetadataUrl:any;
 
             console.log(credential, receiver)
-           credential.data.credential.viewers.forEach(async(item:any, index:any)=>{
+            credential.data.credential.viewers.forEach(async(item:any, index:any)=>{
             console.log(item);
             if (item.id == user.user.id){
                 fileName = item.data.fileName;

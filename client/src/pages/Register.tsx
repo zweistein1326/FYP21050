@@ -83,7 +83,7 @@ const Login = (props:any) => {
           username: username,
           walletAddress: address,
           publicKey: JSON.stringify(publicKey),
-          isAdmin:true
+          isAdmin: true
       }
 
       const payloadStore = {

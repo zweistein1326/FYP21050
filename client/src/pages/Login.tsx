@@ -73,7 +73,7 @@ const Login = (props:any) => {
       console.log(payload)
       const res : AxiosResponse<any> = await axios.post(baseUrl+'login', payload)
       console.log('result',res.data)
-      if(res.data.success){
+      if(res.data.success && res.data.user.isAdmin){
         console.log(username,'username')
         localStorage.setItem('user', JSON.stringify(res.data));
         dispatch(login(payloadStore))

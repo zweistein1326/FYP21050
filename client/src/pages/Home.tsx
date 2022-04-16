@@ -67,65 +67,9 @@ const Home = (props:any) => {
 
   return (
     <Box>
-    <Box >
-    User information
-    {/* Account: {props.location.state.account} */}
-      {/* <Header setLoggedIn={setLoggedIn} loggedIn={loggedIn}/> */}
-    </Box>
-    {/* <Box sx={{display:'flex'}}>
-    <Box sx={{width:'20vw', height:'100vh', mt:2, backgroundColor:'beige', p:3}}>
-      <Typography>
-          My photo (optional)
-        </Typography>
-        <Typography sx={{display:'inline'}}>
-          DID: <span style={{fontWeight:'bold'}}>{activeUser.id} (@{activeUser.username})</span>
-        </Typography>
-        <Typography>
-          Name: {activeUser.firstname} {activeUser.lastname}
-        </Typography>
-        <Typography>
-          Email: {activeUser.email}
-        </Typography>
-        <Button sx={{ mt:3, mb:2 }} variant="contained"><Link to={`/addCredential`}><Typography sx={{color:'white'}}>Add new Credential</Typography></Link></Button>
-        <Button sx={{ mt:3, mb:2 }} variant="contained"><Link to={`/requestCredential`}><Typography sx={{color:'white'}}>Request Credential</Typography></Link></Button>
-    </Box>
-      <Box sx={{width:'60vw', height:'100vh', m:3}}>
-      {loggedIn ?
-      <>
-        {activeUser.id == props.auth.user.id?
-        <Box display='flex'>
-          <Box sx={{width:'30%'}}>
-          <Typography variant="h4" >
-            Issued Credentials
-          </Typography>
-          <Typography >
-            Show credential issued by this user -&gt; View all
-          </Typography>
-          {activeUser.credentials ?
-          activeCredentials.map((credential:any,index:number)=>credential.pending?<CredentialTile key={credential.id} credential={credential} title={activeCredentials[index].id} />:null)
-          :''}
-          </Box>
-          <Box sx={{width:'30%'}}>
-          <Typography variant="h4" >
-            Pending Requests
-          </Typography>
-          {activeUser.credentials ?
-          activeCredentials.map((credential:any,index:number)=>credential.pending?<CredentialTile key={credential.id} credential={credential} title={activeCredentials[index].id} />:null)
-          :''}
-          </Box>
-          <Box sx={{width:'30%'}}>
-          <Typography variant="h4">
-            Accepted credentials
-          </Typography>
-          {activeUser.credentials ?
-          activeCredentials.map((credential:any,index:number)=>!credential.pending?<CredentialTile key={credential.id} credential={credential} title={activeCredentials[index].id} />:null)
-          :''}
-          </Box>
-        </Box>:
-        null}
-      </>: null}
+      <Box >
+        User information
       </Box>
-      </Box> */}
     </Box>
   );
 };

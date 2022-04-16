@@ -1,26 +1,24 @@
 import rsa from "js-crypto-rsa";
+import {encode, decode} from 'base64-arraybuffer';
 
 export async function encrypt(text, publicKey) {
   let encryptedText=''
   await rsa.encrypt(
       Buffer.from(text),
-      // JSON.parse(publicKey),
       publicKey,
       'SHA-256',
       ).then((encrypted) => {
           encryptedText = encrypted;
   })
-  console.log(encryptedText.toString('base64'))
-  return JSON.stringify(encryptedText);
+  console.log(encryptedText)
+  return encode(encryptedText);
 }
 
-
 export async function decrypt(encrypted, key) {
+  console.log(Buffer.from(decode(encrypted)))
   let decryptedText = ''
-  console.log("utils decrypt")
-  console.log(Buffer.from(Object.values(JSON.parse(encrypted))))
   await rsa.decrypt(
-    Buffer.from(Object.values(JSON.parse(encrypted))),
+    Buffer.from(decode(encrypted)),
     key,
     'SHA-256',
   ).then((decrypted) => {

@@ -71,9 +71,23 @@ const RevokePage = () => {
   const [shareCredentials, setShareCredentials] = useState<any[]>([])
   const [transferCredentials, setTransferCredentials] = useState<any[]>([])
 
-
   const baseUrl = 'http://127.0.0.1:8000/'
 
+  let retrievedString :any ;
+  let user:any;
+
+  let publicKey: any;
+  let privateKey: any;
+  
+  retrievedString = localStorage.getItem('user');
+  user = retrievedString ? JSON.parse(retrievedString):null;
+
+  if(user){
+    let publicks:any = localStorage.getItem('publicKey' + user.user.username) ? localStorage.getItem('publicKey' + user.user.username) : "";
+    publicKey = (publicks === "") ? {} : JSON.parse(publicks);
+    let pks:any = localStorage.getItem('privateKey' + user.user.username) ? localStorage.getItem('privateKey' + user.user.username) : "";
+    privateKey = (pks === "") ? {} : JSON.parse(pks);
+  }
 
   useEffect(()=>{ 
     connectWalletHandler();
@@ -167,67 +181,84 @@ const RevokePage = () => {
 
   const handleSubmitTransfer = async (event:any) =>{
     event.preventDefault();
-        try{
-            var credentialId = selectedDoc;
-            const retrievedString :any = localStorage.getItem('user') || '';
-            const user = JSON.parse(retrievedString);
-
-            const pks :any = localStorage.getItem('privateKey' + user.user.username) ? localStorage.getItem('privateKey' + user.user.username) : "";
-            const privateKey = (pks === "") ? {} : JSON.parse(pks);
-    
-            const r : AxiosResponse<any> = await axios.get(baseUrl+'getCredential?credentialId='+credentialId)
-            let fileName = "";
-            let assetHash = "";
-            let metadataUrl = "";
-
-            r.data.credential.viewers.forEach( async (item:any)=>{
-              
-              if (item.id == user.user.id){
-                console.log(item.data)
-                fileName = item.data.fileName;
-                assetHash = await decrypt(item.data.assetHash, privateKey);
-                metadataUrl = await decrypt(item.data.metadataUrl, privateKey);
-              }
-            })
-            
-            
-            const re : AxiosResponse<any> = await axios.get(baseUrl+'getUserById?userId='+receiverAddress)
-            const publicKey = JSON.parse(re.data.user.publicKey);
-            
-            const viewer = {
-              id: receiverAddress, 
-              data:{
-                  fileName:fileName,
-                  assetHash: await encrypt(assetHash, publicKey),
-                  metadataUrl: await encrypt(metadataUrl, publicKey)
-                },
-              permissions: {
-                transfer: true,
-                share: true,
-                revoke: true
-              }
-            }
-            const payload = {
-              from: user.user.id, 
-              to:receiverAddress, 
-              credentialId:credentialId, 
-              walletAddress: defaultAccount,
-              viewer: viewer
-            }
-            console.log(payload)
-            const res : AxiosResponse<any> = await axios.post(baseUrl+'transfer', payload)
-            console.log('result of send',res.data.success)
-            if(res.data.success){
-              console.log('checker')
-              handleClickOpenTransfer()
-            }
-        } catch(err) {
-          console.error(err)
-        } 
-  }
-
-
+      try{
+          var credentialId = selectedDoc;
+          event.preventDefault();
+              const credential : AxiosResponse<any> = await axios.get(baseUrl+'getCredential?credentialId='+credentialId) 
+              const receiver : AxiosResponse<any> = await axios.get(baseUrl+'getUserById?userId='+receiverAddress);           
+              let fileName = "";
+              let assetHash = "";
+              let metadataUrl = "";
+              let decryptAssetHash: any="";
+              let decryptMetadataUrl:any;
   
+              console.log(credential, receiver)
+             credential.data.credential.viewers.forEach(async(item:any, index:any)=>{
+              console.log(item);
+              if (item.id == user.user.id){
+                  fileName = item.data.fileName;
+                  const receiverPublicKey = JSON.parse(receiver.data.user.publicKey)
+                  try{
+                    decryptAssetHash = await decrypt(item.data.assetHash, privateKey);
+                  }catch(e){
+                    console.log(e)
+                  }
+                  try{
+                    decryptMetadataUrl = await decrypt(item.data.metadataUrl, privateKey);
+                  }catch(e){
+                    console.log(e)
+                  }
+                  console.log(decryptAssetHash, decryptMetadataUrl)
+                  try{
+                    assetHash =  await encrypt(decryptAssetHash, receiverPublicKey)
+                  }
+                  catch(e){
+                    console.log(e)
+                  }
+                  try{
+                    metadataUrl = await encrypt(decryptMetadataUrl, receiverPublicKey)
+                  }
+                  catch(e){
+                    console.log(e)
+                  }
+                  
+                  console.log(assetHash, metadataUrl)
+                  const viewer = {
+                    id: receiverAddress, 
+                    data:{
+                        fileName: fileName,
+                        assetHash,
+                        metadataUrl
+                      },
+                    permissions: {
+                      transfer: true,
+                      share: true,
+                      revoke: true
+                    }
+                  }
+                  const payload = {
+                    from: user.user.id, 
+                    to:receiverAddress, 
+                    credentialId:credentialId, 
+                    walletAddress: defaultAccount,
+                    viewer: viewer
+                  }
+                  console.log(payload)
+                  const res : AxiosResponse<any> = await axios.post(baseUrl+'transfer', payload)
+                  console.log('result of send',res.data.success)
+                  if(res.data.success){
+                    console.log('checker')
+                    handleClickOpenTransfer()
+                  }
+                  return;
+                }
+                })
+          } 
+          catch(err) {
+            console.error(err)
+          } 
+}
+
   const handleRevocation = async (event:any) =>{
     event.preventDefault();
 

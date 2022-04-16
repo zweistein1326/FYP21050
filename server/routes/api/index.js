@@ -99,8 +99,8 @@ router.post('/upload', async (req, res, next) => {
     // viewers = [{id:string, data:{fileName:string, assetHash:string, metadataUrl:string}, permissions:{revoke:boolean, share:boolean, transfer: boolean}}]
     // console.log(req.body);
     try{
-        const tx = await usersDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), viewers).send({from: walletAddress, gas:4000000}); // Add credential to list of all credentials
-        const credentialId = await usersDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), viewers).call({from: web3.eth.defaultAccount, gas:4000000}) - 1 ; // Add credential to list of all credentials
+        const tx = await usersDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), viewers).send({from: walletAddress, gas:5000000}); // Add credential to list of all credentials
+        const credentialId = await usersDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), viewers).call({from: web3.eth.defaultAccount, gas:5000000}) - 1 ; // Add credential to list of all credentials
         const credential =  await usersDeployedContract.methods.getCredentialById(credentialId).call({from: web3.eth.defaultAccount, gas:4000000}); // Add credential to list of all credentials
         console.log("CREDENTIAL: ", credential)
         const newCredential = {id:credential.id, createdBy:credential.createdBy, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers.map((viewer)=>({id:viewer.id, data:{fileName:viewer.data.fileName, assetHash:viewer.data.assetHash, metadataUrl: viewer.data.metadataUrl}, permissions:{transfer: viewer.permissions.transfer, share:viewer.permissions.share, revoke: viewer.permissions.revoke}}))}

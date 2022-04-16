@@ -61,6 +61,22 @@ const UploadPage = () => {
   const [credentialId, setCredentialId] = useState<any>('')
   const baseUrl = 'http://127.0.0.1:8000/'
 
+  let retrievedString :any ;
+  let user:any;
+
+  let publicKey: any;
+  let privateKey: any;
+
+  retrievedString = localStorage.getItem('user');
+  user = retrievedString ? JSON.parse(retrievedString):null;
+
+  if(user){
+    let publicks:any = localStorage.getItem('publicKey' + user.user.username) ? localStorage.getItem('publicKey' + user.user.username) : "";
+    publicKey = (publicks === "") ? {} : JSON.parse(publicks);
+    let pks:any = localStorage.getItem('privateKey' + user.user.username) ? localStorage.getItem('privateKey' + user.user.username) : "";
+    privateKey = (pks === "") ? {} : JSON.parse(pks);
+  }
+
   const handleClickOpen =()=>{
     setOpen(true)
   }
@@ -134,49 +150,75 @@ const UploadPage = () => {
   const handleSubmitTransfer = async (event:any) =>{
     event.preventDefault();
         try{
-            const retrievedString :any = localStorage.getItem('user') || '';
-            const user = JSON.parse(retrievedString);
-
-            const r : AxiosResponse<any> = await axios.get(baseUrl+'getCredential?credentialId='+credentialId) 
+            const credential : AxiosResponse<any> = await axios.get(baseUrl+'getCredential?credentialId='+credentialId) 
+            const receiver : AxiosResponse<any> = await axios.get(baseUrl+'getUserById?userId='+receiverAddress);           
             let fileName = "";
             let assetHash = "";
             let metadataUrl = "";
+            let decryptAssetHash: any="";
+            let decryptMetadataUrl:any;
 
-            r.data.credential.viewers.forEach((item:any)=>{
-              if (item.id == user.user.id){
+            console.log(credential, receiver)
+           credential.data.credential.viewers.forEach(async(item:any, index:any)=>{
+            console.log(item);
+            if (item.id == user.user.id){
                 fileName = item.data.fileName;
-                assetHash = item.data.assetHash;
-                metadataUrl = item.data.metadataUrl;
-              
+                const receiverPublicKey = JSON.parse(receiver.data.user.publicKey)
+                try{
+                  decryptAssetHash = await decrypt(item.data.assetHash, privateKey);
+                }catch(e){
+                  console.log(e)
+                }
+                try{
+                  decryptMetadataUrl = await decrypt(item.data.metadataUrl, privateKey);
+                }catch(e){
+                  console.log(e)
+                }
+                console.log(decryptAssetHash, decryptMetadataUrl)
+                try{
+                  assetHash =  await encrypt(decryptAssetHash, receiverPublicKey)
+                }
+                catch(e){
+                  console.log(e)
+                }
+                try{
+                  metadataUrl = await encrypt(decryptMetadataUrl, receiverPublicKey)
+                }
+                catch(e){
+                  console.log(e)
+                }
+                
+                console.log(assetHash, metadataUrl)
+                const viewer = {
+                  id: receiverAddress, 
+                  data:{
+                      fileName: fileName,
+                      assetHash,
+                      metadataUrl
+                    },
+                  permissions: {
+                    transfer: true,
+                    share: true,
+                    revoke: true
+                  }
+                }
+                const payload = {
+                  from: user.user.id, 
+                  to:receiverAddress, 
+                  credentialId:credentialId, 
+                  walletAddress: defaultAccount,
+                  viewer: viewer
+                }
+                console.log(payload)
+                const res : AxiosResponse<any> = await axios.post(baseUrl+'transfer', payload)
+                console.log('result of send',res.data.success)
+                if(res.data.success){
+                  console.log('checker')
+                  handleClickOpenTransfer()
+                }
+                return;
               }
-            })
-            const viewer = {
-              id: receiverAddress, 
-              data:{
-                  fileName:fileName,
-                  assetHash:assetHash,
-                  metadataUrl:metadataUrl
-                },
-              permissions: {
-                transfer: true,
-                share: true,
-                revoke: true
-              }
-            }
-            const payload = {
-              from: user.user.id, 
-              to:receiverAddress, 
-              credentialId:credentialId, 
-              walletAddress: defaultAccount,
-              viewer: viewer
-            }
-            console.log(payload)
-            const res : AxiosResponse<any> = await axios.post(baseUrl+'transfer', payload)
-            console.log('result of send',res.data.success)
-            if(res.data.success){
-              console.log('checker')
-              handleClickOpenTransfer()
-            }
+              })
         } catch(err) {
           console.error(err)
         } 
@@ -196,8 +238,6 @@ const UploadPage = () => {
             //const viewers = [{id:string, data:{fileName:string, assetHash:string, metadataUrl:string}, permissions:{revoke:boolean, share:boolean, transfer: boolean}}]
             setUrlArr(url);
             
-            const pks :any = localStorage.getItem('publicKey' + user.user.username) ? localStorage.getItem('publicKey' + user.user.username) : "";
-            const publicKey = (pks === "") ? {} : JSON.parse(pks);
             
             const ah = await encrypt(created.cid.toString(), publicKey);
             const murl = await encrypt(url, publicKey)

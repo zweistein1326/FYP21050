@@ -19,9 +19,6 @@ import { useNavigate } from 'react-router-dom';
 import { REGISTER } from '../graphql';
 import { ethers } from 'ethers';
 import axios, { AxiosResponse } from 'axios';
-// import SideBarLayout from './SidebarLayout'
-import fs from 'fs';
-import { id } from 'ethers/lib/utils';
 import Layout from './Sidebar/Layout'
 
 declare var window: any;

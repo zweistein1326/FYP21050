@@ -24,6 +24,7 @@
     "@types/react-router-dom": "^5.3.2",
     "@usedapp/core": "^0.7.3",
     "apollo-link-rest": "^0.8.0-beta.0",
+    "base64-arraybuffer": "^1.0.2",
     "crypto": "^1.0.1",
     "crypto-js": "^4.1.1",
     "date-fns": "^2.28.0",

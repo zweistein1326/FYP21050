@@ -50,10 +50,17 @@ const Account = () => {
     getCredentials();
   },[state])
 
+  let privateKey: any;
+  const retrievedString :any = localStorage.getItem('user');
+  const user = retrievedString ? JSON.parse(retrievedString) : null;
+  if(user){
+    let pks :any = localStorage.getItem('privateKey' + user.user.username) ? localStorage.getItem('privateKey' + user.user.username) : "";
+    privateKey = (pks === "") ? {} : JSON.parse(pks);  
+  }
+  
   
   const getCredentials = async () =>{
-    const retrievedString :any = localStorage.getItem('user') || '';
-    const user = JSON.parse(retrievedString);
+    
     const res : AxiosResponse<any> = await axios.get(baseUrl+'getFilesByUser?userId='+user.user.id)
     console.log(res.data,baseUrl+'getFilesByUser?userId'+user.user.id);
     var num = 1
@@ -90,14 +97,25 @@ const Account = () => {
       });
 
       const resp : AxiosResponse<any> = await axios.get(baseUrl+'getUserById?userId='+i.currentOwner);
-
-      const pks :any = localStorage.getItem('privateKey' + user.user.username) ? localStorage.getItem('privateKey' + user.user.username) : "";
-      const privateKey = (pks === "") ? {} : JSON.parse(pks);
+      console.log(privateKey)
       
       i.viewers.forEach(async (it: any) => {
+        let dmrl:any, ah:any;
+        try{
+          console.log(it.data.assetHash, it.data.metadataUrl); 
+          ah = await decrypt(it.data.assetHash, privateKey);
+         console.log(ah)
+        }catch(e){
+          console.log(e)
+        }
+        try{
+            dmrl = await decrypt(it.data.metadataUrl, privateKey);
+            console.log(dmrl)
+        }
+        catch(e){
+          console.log(e)
+        }
         if (it.id === user.user.id) {
-          const ah = await decrypt(it.data.assetHash, privateKey);
-          const dmrl = await decrypt(it.data.metadataUrl, privateKey);
           setDataRows((oldData)=>[...oldData, {
             id:num, 
             owner: resp.data.user.username,
@@ -109,6 +127,7 @@ const Account = () => {
             transfer: t,
             revoke: r,
             share: s, 
+            key: Math.random()*100000
           }] )
         }
       })

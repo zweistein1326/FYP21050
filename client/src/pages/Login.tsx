@@ -57,10 +57,7 @@ const Login = (props:any) => {
 
   const HandleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
-    const userTemp = 'user4'
-    const walletTemp= '0x0AC9Be48d8b52F707161c6001b3fb3d13d4B3214'
-    
+        
     const payload = {
       username: username,
       walletAddress: address,

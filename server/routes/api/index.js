@@ -23,13 +23,13 @@ router.get('/', async(req,res,next)=>{
 // * Register
 router.post('/register', async (req, res, next) => {
     
-    const {username, walletAddress, publicKey} = req.body;
+    const {username, walletAddress, publicKey, isAdmin} = req.body;
     
     try{
-        const tx = await usersDeployedContract.methods.createNewUser(username, walletAddress, publicKey).send({from: walletAddress, gas:4000000});
+        const tx = await usersDeployedContract.methods.createNewUser(username, walletAddress, publicKey, isAdmin).send({from: walletAddress, gas:4000000});
         // web3.eth.accounts.signTransaction(tx);
         const user = await usersDeployedContract.methods.getUserByUsername(username).call({from: web3.eth.defaultAccount, gas:4000000});
-        const returnUser = {id:user.id, username:user.username, publicKey:user.publicKey, credentialIds:user.credentialIds, publicKey: user.publicKey}
+        const returnUser = {id:user.id, username:user.username, publicKey:user.publicKey, credentialIds:user.credentialIds, publicKey: user.publicKey, isAdmin: user.isAdmin}
         return res.status(200).json({user: returnUser, success: true})
     }
     catch(e){
@@ -43,7 +43,7 @@ router.post('/login', async (req, res, next) => {
     try{
         const user = await usersDeployedContract.methods.getUserByUsername(username).call({from: web3.eth.defaultAccount, gas:400000});
         if(user.walletAddress.toLowerCase() == walletAddress.toLowerCase()){
-            const returnUser = {id:user.id, username:user.username, walletAddress:user.walletAddress, credentialIds:user.credentialIds, publicKey: user.publicKey}
+            const returnUser = {id:user.id, username:user.username, publicKey:user.publicKey, credentialIds:user.credentialIds, publicKey: user.publicKey, isAdmin: user.isAdmin}
             return res.status(200).json({user: returnUser, success:true});
         }
         return res.status(200).json({message:'Login Failed',success:false});
@@ -57,7 +57,7 @@ router.get('/getUserById', async (req, res, next)=>{
     const userId = req.query.userId;
     try{
         const user = await usersDeployedContract.methods.getUserById(userId).call({from:web3.eth.defaultAccount, gas:400000});
-        const returnUser = {id:user.id, username:user.username, walletAddress:user.walletAddress, credentialIds:user.credentialIds, publicKey: user.publicKey}
+        const returnUser = {id:user.id, username:user.username, publicKey:user.publicKey, credentialIds:user.credentialIds, publicKey: user.publicKey, isAdmin: user.isAdmin}
         return res.status(200).json({user: returnUser, success:true})
     }
     catch(e){

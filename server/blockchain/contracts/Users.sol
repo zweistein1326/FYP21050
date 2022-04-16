@@ -10,6 +10,7 @@ contract Users{
         address walletAddress;
         uint256[] credentialIds;
         string publicKey;
+        bool isAdmin;
     }
 
     struct CredentialData{
@@ -52,10 +53,10 @@ contract Users{
     // * User functions * //
 
     // * Register new user
-    function createNewUser(string memory username, address walletAddress, string memory publicKey) public {
+    function createNewUser(string memory username, address walletAddress, string memory publicKey, bool isAdmin) public {
         userCount++;
         uint256[] memory credentialIds;
-        users[userCount] = User(userCount, username, walletAddress, credentialIds, publicKey);
+        users[userCount] = User(userCount, username, walletAddress, credentialIds, publicKey, isAdmin);
     }
 
     // * Add credential to user's credentials list 

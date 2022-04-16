@@ -160,8 +160,8 @@ router.post('/revoke', async(req,res,next)=>{
     const {credentialId, senderAddress, reason, walletAddress} = req.body;
 
     try{
-        await usersDeployedContract.methods.revokeCredential(credentialId, senderAddress, reason).send({from: walletAddress, gas:400000});
-        const credential = await usersDeployedContract.methods.getCredentialById(credentialId).call({from:web3.eth.defaultAccount, gas:400000});
+        await usersDeployedContract.methods.revokeCredential(credentialId, senderAddress, reason).send({from: walletAddress, gas:900000});
+        const credential = await usersDeployedContract.methods.getCredentialById(credentialId).call({from:web3.eth.defaultAccount, gas:900000});
         const newCredential = {id:credential.id, createdBy:credential.createdBy, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers.map((viewer)=>({id:viewer.id, data:{fileName:viewer.data.fileName, assetHash:viewer.data.assetHash, metadataUrl: viewer.data.metadataUrl}, permissions:{transfer: viewer.permissions.transfer, share:viewer.permissions.share, revoke: viewer.permissions.revoke}}))}
         return res.status(200).json({credential: newCredential, success:true})
     }

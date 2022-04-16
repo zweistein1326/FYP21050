@@ -1,47 +1,80 @@
-import { useEffect, useState } from "react";
-import { connect, useSelector } from "react-redux"
-import { Alert, Box, Button, Typography, Link, TextField } from "@mui/material";
+import { useState } from "react";
+import { connect } from "react-redux"
+import { Alert, Box, Button, Typography } from "@mui/material";
+import { Link } from "react-router-dom";
 import { useMutation } from "@apollo/client";
-import axios, { AxiosResponse } from "axios";
+import { CHANGEPENDINGSTATUS, CHANGESTATUS } from "../graphql";
 
 const CredentialTile = (props:any) => {
-    const account = useSelector((state:any)=> state.auth.account);
-    console.log(account);
     const {credential,title} = props;
-    const [receiver, setReceiver] = useState<string>('');
-    const [owner, setOwner] = useState<string>('');
+    const [changeCredentialPendingStatus,{loading,error}] = useMutation(CHANGEPENDINGSTATUS);
+    const [changeCredentialStatus,{loading:loading2,error:error2}] = useMutation(CHANGESTATUS);
 
-    const transfer = async() => {
-        try{
-            const newOwner : AxiosResponse<any> = await axios.post('http://127.0.0.1:8000/transfer',{
-            from:account,
-            to: receiver,
-            tokenId: props.tokenData.tokenId
-        });
-        alert(`Transferred to ${newOwner.data.newOwner}`)
-        setOwner(newOwner.data.newOwner);
-        setReceiver('');
-        console.log(newOwner);
-        }catch(e){
-            alert('Could not complete transfer');
-        }
-        
-        // update token owner
+    const getCredentialInfo = ()=>{
+        // find info for credentialx
     }
 
-    useEffect(()=>{
-        setOwner(props.owner);
-    },[]);
+     const acceptCredential=()=>{
+        changeCredentialPendingStatus({
+            variables:{
+                input: {
+                    id:title,
+                    ownerId: props.auth.user.id
+                }
+            }
+        }).then((res)=>{
+            const {status} = res.data.changeCredentialPendingStatus;
+            console.log(status);
+        })
+    }
+
+    const revokeCredential = ()=>{
+        alert('Are you sure you want to revoke this credential?');
+        // delink credential from user's account
+        changeCredentialStatus({
+            variables:{
+                input: {
+                    id:title,
+                    ownerId: props.auth.user.id
+                }
+            }
+        }).then((res)=>{
+            const {status} = res.data.changeCredentialStatus;
+            console.log(status);
+        })
+    }
 
     return(
-        <Box>
-            <a href={props.newTokenData.tokenUri} target="_blank" key={props.tokenData.tokenId}>{props.tokenCount}.  {props.tokenData.name}</a>
-            <Typography>Owner: {owner}</Typography>
-            <TextField name="receiver_address" placeholder="Transfer to" value={receiver} onChange={(receiver)=>{setReceiver(receiver.target.value)}}/>
-            <Button onClick = {transfer}>Transfer</Button>
+        <Box sx={{ mt:3, mb:2, border:'1px solid grey', p:2 }}>
+            <Link to={`${title}`}><Typography variant="h6">{credential.title}</Typography></Link>
+            {credential.pending ?
+            <Box>
+            <Button 
+            onClick={acceptCredential} 
+            color="success" 
+            variant="contained" 
+            sx={{ mt:3, mb:2 }}>
+                Accept!
+            </Button>
+            <Button onClick={revokeCredential}
+            color="error"
+            variant="contained"
+            sx={{ mt:3, mb:2 }}>
+                Reject
+            </Button>
+            </Box> 
+            :
+            <Button onClick={revokeCredential}
+            color="warning"
+            variant="contained"
+            sx={{ mt:3, mb:2 }}>
+                Revoke
+            </Button>}
         </Box>
     )
 }
 
-
-export default CredentialTile;
+const mapStateToProps = (state:any) => ({
+    auth:state.auth
+})
+export default connect(mapStateToProps)(CredentialTile);

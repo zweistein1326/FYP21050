@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ApolloProvider, ApolloClient, InMemoryCache } from '@apollo/client';
 import { RestLink } from 'apollo-link-rest';
-// import Login from './pages/Login';
+import Login from './pages/Login';
 import Home from './pages/Home';
 import Register from './pages/Register';
 import CredentialPage from './pages/CredentialPage';
@@ -67,20 +67,11 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Home />} />
-<<<<<<< .merge_file_bgHTbf
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />}/>
           <Route path="/home" element={<DashboardPage />} />
           <Route path="/upload" element={<UploadPage />} />
           <Route path="/revoke" element={<RevokePage />} />
-=======
-          {/* <Route path="/login" element={<Login />} /> */}
-          <Route path="/register" element={<Register />} />
-          <Route path="/user/:id" element={<Home />} />
-          <Route path="/user/:id/:credentialId" element={<CredentialPage />} />
-          <Route path="/addCredential" element={<AddCredential />} />
-          <Route path="/requestCredential" element={<RequestCredential />} />
->>>>>>> .merge_file_ABBnT8
         </Routes>
       </Router>
       </Provider>

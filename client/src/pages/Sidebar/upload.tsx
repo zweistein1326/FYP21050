@@ -29,9 +29,17 @@ import axios, { AxiosResponse } from 'axios';
 import Layout from './Layout'
 import { AppState } from '../../store/configureStore'
 import { connect, useSelector } from 'react-redux';
+import {create} from 'ipfs-http-client';
+import {encrypt, decrypt} from '../../components/rsa/utils';
+
 
 
 declare var window: any;
+const ipfs = create({
+  host: "ipfs.infura.io",
+  port: 5001,
+  protocol: "https"
+});
 
 
 const UploadPage = () => {
@@ -48,6 +56,9 @@ const UploadPage = () => {
   const [openTransfer, setOpenTransfer] = useState<any>('')
   const [selectedDoc, setSelectedDoc] = useState<Boolean>(false)
   const [filePlaceholder, setFilePlaceholder] = useState<any>('Upload File')
+  const [url, setUrlArr] = useState<any>('')
+  // const [credentialId, setDataUpload] = useState<any>('')
+  const [credentialId, setCredentialId] = useState<any>('')
   const baseUrl = 'http://127.0.0.1:8000/'
 
   const handleClickOpen =()=>{
@@ -78,8 +89,12 @@ const UploadPage = () => {
     console.log(res.data,baseUrl+'getFilesByUser?userId'+user.user.id);
     res.data.credentials.forEach((i:any)=>{
       if(i.isValid === true){
-        setCredentials(oldData=> [...oldData, i.data[0]] )
+        i.viewers.forEach((item:any)=>{
+          setCredentials(oldData=> [...oldData, item.data.fileName] )
+        })
         setCheckCredentials(oldData=>[...oldData, i])
+        console.log(i)
+        
       }
       
     })
@@ -119,21 +134,41 @@ const UploadPage = () => {
   const handleSubmitTransfer = async (event:any) =>{
     event.preventDefault();
         try{
-            var credentialId = '';
-            checkCredentials.map((i:any)=>{      
-              if(i.data[0] === selectedDoc){
-                credentialId = i.id
-                console.log('check')
-              }
-            })
             const retrievedString :any = localStorage.getItem('user') || '';
             const user = JSON.parse(retrievedString);
-    
+
+            const r : AxiosResponse<any> = await axios.get(baseUrl+'getCredential?credentialId='+credentialId) 
+            let fileName = "";
+            let assetHash = "";
+            let metadataUrl = "";
+
+            r.data.credential.viewers.forEach((item:any)=>{
+              if (item.id == user.user.id){
+                fileName = item.data.fileName;
+                assetHash = item.data.assetHash;
+                metadataUrl = item.data.metadataUrl;
+              
+              }
+            })
+            const viewer = {
+              id: receiverAddress, 
+              data:{
+                  fileName:fileName,
+                  assetHash:assetHash,
+                  metadataUrl:metadataUrl
+                },
+              permissions: {
+                transfer: true,
+                share: true,
+                revoke: true
+              }
+            }
             const payload = {
               from: user.user.id, 
               to:receiverAddress, 
-              credentialId, 
-              walletAddress: defaultAccount
+              credentialId:credentialId, 
+              walletAddress: defaultAccount,
+              viewer: viewer
             }
             console.log(payload)
             const res : AxiosResponse<any> = await axios.post(baseUrl+'transfer', payload)
@@ -156,13 +191,39 @@ const UploadPage = () => {
         try{
             const retrievedString :any = localStorage.getItem('user') || '';
             const user = JSON.parse(retrievedString);
-            const formData = new FormData()
-            formData.append('inputFile',file) 
-            formData.append('walletAddress', defaultAccount)
-            formData.append('senderAddress',user.user.id)     
-            const res : AxiosResponse<any> = await axios.post(baseUrl+'upload', formData)
+            const created = await ipfs.add(file);
+            const url = `https://ipfs.infura.io/ipfs/${created.path}`;
+            //const viewers = [{id:string, data:{fileName:string, assetHash:string, metadataUrl:string}, permissions:{revoke:boolean, share:boolean, transfer: boolean}}]
+            setUrlArr(url);
+            
+            const pks :any = localStorage.getItem('publicKey' + user.user.username) ? localStorage.getItem('publicKey' + user.user.username) : "";
+            const publicKey = (pks === "") ? {} : JSON.parse(pks);
+            
+            const ah = await encrypt(created.cid.toString(), publicKey);
+            const murl = await encrypt(url, publicKey)
+            const viewers = [{
+              id: user.user.id , 
+              data:{
+                  fileName: file.name, 
+                  assetHash: ah,
+                  metadataUrl: murl
+                },
+                  permissions:{revoke:true, share:true, transfer: true}
+            }]
+
+            const payload = {
+              walletAddress: defaultAccount,
+              senderAddress: user.user.id,
+              viewers: viewers,
+            }
+            console.log("payload")
+            console.log(payload);
+            const res : AxiosResponse<any> = await axios.post(baseUrl+'upload', payload)
             console.log('result of send',res.data)
+            
             if(res.data.success === true){
+              setCredentialId(res.data.credential.id)
+              console.log(res.data.credential.id)
               console.log("check")
               handleClickOpen()
               setFilePlaceholder('Upload File')
@@ -217,7 +278,7 @@ const UploadPage = () => {
         </DialogActions>
       </Dialog>
     
-    <Container component="main"  >
+    <Container component="main" sx={{width:'80%'}} >
       <Box
         sx={{
           marginTop: 3,
@@ -226,10 +287,9 @@ const UploadPage = () => {
           alignItems: 'center',
         }}
       >
-      <Typography variant='h5' display="block" gutterBottom>Upload and Transfer</Typography>
-      <Grid container spacing={2}>
+      <Typography variant='h5' display="block" gutterBottom>Upload</Typography>
+      <Grid container>
       <Grid item xs={12}>
-
         <Box component="form" noValidate sx={{ mt: 1, marginBottom:3 }}>
                     <Card sx={{width: '100%'}}>
                         <Typography variant='h6' display="block" gutterBottom>
@@ -244,17 +304,22 @@ const UploadPage = () => {
           
         </Box>
         </Grid>    
-                <Grid item xs = {6}>
+                <Grid container spacing={2}>
+                {/* <Grid item xs={2}></Grid> */}
+                <Grid item xs = {12}>
                 <Card sx={{width: '100%'}} >
                     <Box component="form" onSubmit={handleSubmitFile} noValidate sx={{ mt: 1, marginBottom:3  }}>
-                    <Grid container spacing={2}>
+                    <Grid container spacing={1}>
                         <Grid item xs={12}>
                           <br></br>
                         <Typography variant='h6' display="block" gutterBottom color="text.secondary" style={{ fontWeight: 600 }}>
                         File Upload
                         </Typography>
                         </Grid>
-                        <Box sx={{ width: '100%', typography: 'body1' }}>
+                        </Grid>
+                        <Grid container spacing={3}>
+                        <Box sx={{ width: '100%', typography: 'body1' }}>                         
+
                         <Grid item xs={12}>
                         <br></br>
                             <input type="file" id="file" name="file" placeholder={filePlaceholder} onChange={onFileUpload}/>
@@ -269,39 +334,17 @@ const UploadPage = () => {
                                 Submit File
                             </Button>
                             </Grid>
-                            <br></br>
                         </Box>                    
                     </Grid>
                     </Box>
-                </Card>
-                </Grid>
-                <Grid item xs={6}>
-                <Card sx={{width: '100%'}}>
-                  <br></br>
+                    <hr></hr>
                     <Typography variant='h6' display="block" gutterBottom color="text.secondary" style={{ fontWeight: 600 }}>
                         Transfer
                     </Typography>
-                    <CardContent>
+                    
                     <Box component="form" onSubmit={handleSubmitTransfer} noValidate sx={{ mt: 1  }}>
-                    <Grid container spacing={2} >
-                      <Grid item xs={6}>
-                      <Typography variant='subtitle1'>
-                      Choose the credential
-                      </Typography>
-                      </Grid>
-                      <br></br>
-                      <Grid item xs={6}>
-                      <Autocomplete
-                          disablePortal
-                          id="combo-box-demo"
-                          options={credentials}
-                          onChange={(event, value) => setSelectedDoc(value)}
-                          // sx={{ width: }}
-                          renderInput={(params) => <TextField {...params} label="Credential"  />}
-                          size='small'
-                          />
-                          </Grid>
-                        
+                    <Grid container spacing={2} >                      
+                      <br></br>                        
                       </Grid>
                       <br></br>
                     <Grid container spacing={2}>
@@ -309,17 +352,19 @@ const UploadPage = () => {
                             <Typography>Enter address of receiver</Typography>
                         </Grid>
                         <Grid item xs={6}>
-                        <TextField size="small" id="outlined-basic" label="Address" variant="outlined" value={receiverAddress} onChange={(e)=>setReceiverAddress(e.target.value)} />      
+                        <TextField size="small" id="outlined-basic" label="Address" variant="outlined" style={{width:'70%'}} value={receiverAddress} onChange={(e)=>setReceiverAddress(e.target.value)} />      
                         </Grid>
                         <Grid item xs ={12}>
                         <Button type='submit' variant="contained">Transfer</Button>
                         </Grid>
+                        <br></br>
                     </Grid>
                     </Box>
-                    
-                    </CardContent>
-                    </Card>
+                  <br></br>
+                </Card>
                 </Grid>                
+                </Grid>
+              
         </Grid>
       </Box>
     </Container>

@@ -98,8 +98,6 @@ router.post('/upload', async (req, res, next) => {
     const { senderAddress, walletAddress, viewers } = req.body;
     // viewers = [{id:string, data:{fileName:string, assetHash:string, metadataUrl:string}, permissions:{revoke:boolean, share:boolean, transfer: boolean}}]
     // console.log(req.body);
-    console.log("test");
-    console.log(req.body.viewers)
     try{
         const tx = await usersDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), viewers).send({from: walletAddress, gas:4000000}); // Add credential to list of all credentials
         const credentialId = await usersDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), viewers).call({from: web3.eth.defaultAccount, gas:4000000}) - 1 ; // Add credential to list of all credentials

@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Link, useParams } from 'react-router-dom';
 import CredentialTile from '../components/CredentialTile';
 import Header from '../components/Header';
+import { GETUSERBYID } from '../graphql';
 import { User } from '../models/User';
 import { AppState } from '../store/configureStore'
 
@@ -19,6 +20,7 @@ const Home = (props:any) => {
   );
   const [activeUser,setActiveUser] = useState<any>({});
   const [activeCredentials,setActiveCredentials] = useState<any>([]);
+  const [fetchInfo,{loading,error}] = useMutation(GETUSERBYID);
   const [account, setAccount] = useState<any>(null);
   
   

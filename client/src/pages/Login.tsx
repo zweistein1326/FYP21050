@@ -16,16 +16,9 @@ import {
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useMutation } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
-<<<<<<< .merge_file_seUcZU
 import { LOGIN } from '../graphql';
 import {connect, useDispatch, useSelector} from 'react-redux';
 import { login } from '../actions/auth';
-=======
-import {connect} from 'react-redux';
-// import { login } from '../actions/auth';
->>>>>>> .merge_file_JDKi2q
-import { User } from '../models/User';
-import { privateEncrypt } from 'crypto';
 import axios, { AxiosResponse } from 'axios';
 
 declare var window: any;
@@ -36,7 +29,6 @@ const Login = (props:any) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [message, setMessage] = useState<string>('');
-<<<<<<< .merge_file_seUcZU
   const [submitLogin, { loading, error }] = useMutation(LOGIN);
   const [username, setUsername] = useState<any>('');
   const [address, setAddress] = useState<string>('');
@@ -49,12 +41,10 @@ const Login = (props:any) => {
       console.log(err);
     }
   }
-=======
->>>>>>> .merge_file_JDKi2q
 
   const checkKey=async()=>{
     const retrievedString :any = localStorage.getItem('keyAccount') || '';
-    const key = JSON.parse(retrievedString);
+    const key = retrievedString ? JSON.parse(retrievedString) : {} ;
     console.log('check storage',key.privateKey, typeof(key.privateKey), typeof(username))
   }
 
@@ -75,7 +65,6 @@ const Login = (props:any) => {
       username: username,
       walletAddress: address,
     };
-<<<<<<< .merge_file_seUcZU
 
     const payloadStore = {
       username: username,
@@ -87,7 +76,7 @@ const Login = (props:any) => {
       console.log(payload)
       const res : AxiosResponse<any> = await axios.post(baseUrl+'login', payload)
       console.log('result',res.data)
-      if(res.data.success === true){
+      if(res.data.success){
         console.log(username,'username')
         localStorage.setItem('user', JSON.stringify(res.data));
         dispatch(login(payloadStore))
@@ -102,8 +91,6 @@ const Login = (props:any) => {
       console.log(e)
     }
     
-=======
->>>>>>> .merge_file_JDKi2q
   };
 
   return (
@@ -155,6 +142,7 @@ const Login = (props:any) => {
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
+            disabled={loading}
           >
             Sign In
           </Button>
@@ -176,12 +164,7 @@ const Login = (props:any) => {
 };
 
 const mapDispatchToProps = (dispatch:any)=> ({
-<<<<<<< .merge_file_seUcZU
   login: (userData:any) => dispatch(login(userData)),
-=======
-//   login: (userData:User) => dispatch(login(userData)),
-  // logout: () => dispatch(logout())
->>>>>>> .merge_file_JDKi2q
 });
 
 export default connect(null, mapDispatchToProps)(Login);

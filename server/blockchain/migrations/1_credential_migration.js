@@ -1,5 +1,5 @@
-const Users = artifacts.require('Users');
+const OneID = artifacts.require('OneID');
 
 module.exports = function (deployer) {
-    deployer.deploy(Users);
+    deployer.deploy(OneID);
 }

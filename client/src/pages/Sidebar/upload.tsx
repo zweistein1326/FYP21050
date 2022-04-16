@@ -198,29 +198,23 @@ const UploadPage = () => {
             
             const pks :any = localStorage.getItem('publicKey' + user.user.username) ? localStorage.getItem('publicKey' + user.user.username) : "";
             const publicKey = (pks === "") ? {} : JSON.parse(pks);
-
-            // const ENCassetHash = ;
-            // const ENCmetadataUrl = ;
             
+            const ah = await encrypt(created.cid.toString(), publicKey);
+            const murl = await encrypt(url, publicKey)
             const viewers = [{
               id: user.user.id , 
               data:{
                   fileName: file.name, 
-                  assetHash: created.cid.toString(),
-                  metadataUrl: url
+                  assetHash: ah,
+                  metadataUrl: murl
                 },
                   permissions:{revoke:true, share:true, transfer: true}
             }]
-            // const formData = new FormData()
-            // formData.append('inputFile',file) 
-            // formData.append('walletAddress', defaultAccount)
-            // formData.append('senderAddress',user.user.id)     
-            // formData.append('viewers', JSON.stringify(viewers))
 
             const payload = {
               walletAddress: defaultAccount,
               senderAddress: user.user.id,
-              viewers: JSON.stringify(viewers),
+              viewers: viewers,
             }
             console.log("payload")
             console.log(payload);

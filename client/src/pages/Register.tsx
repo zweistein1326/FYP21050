@@ -82,7 +82,7 @@ const Login = (props:any) => {
       const payload = {
           username: username,
           walletAddress: address,
-          publicKey: "0x1234"
+          publicKey: JSON.stringify(publicKey),
       }
 
       const payloadStore = {

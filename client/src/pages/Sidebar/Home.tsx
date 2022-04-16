@@ -14,7 +14,7 @@ import {
   ListItemText,
   Card,
 } from '@mui/material';
-import { DataGrid, GridColDef, GridValueGetterParams } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridValueGetterParams, gridVisibleSortedRowEntriesSelector } from '@mui/x-data-grid';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios, { AxiosResponse } from 'axios';
 import Layout from './Layout'
@@ -94,18 +94,24 @@ const Account = () => {
       const pks :any = localStorage.getItem('privateKey' + user.user.username) ? localStorage.getItem('privateKey' + user.user.username) : "";
       const privateKey = (pks === "") ? {} : JSON.parse(pks);
       
-      setDataRows(oldData=>[...oldData, {
-        id:num, 
-        owner: resp.data.user.username,
-        doc:i.viewers[0].data.fileName, 
-        date: i.createdAt,
-        link: i.viewers[0].data.metadataUrl,
-        assetHash: i.viewers[0].data.assetHash, 
-        valid:i.isValid,
-        transfer: t,
-        revoke: r,
-        share: s, 
-      }] )
+      i.viewers.forEach(async (it: any) => {
+        if (it.id === user.user.id) {
+          const ah = await decrypt(it.data.assetHash, privateKey);
+          const dmrl = await decrypt(it.data.metadataUrl, privateKey);
+          setDataRows((oldData)=>[...oldData, {
+            id:num, 
+            owner: resp.data.user.username,
+            doc:it.data.fileName, 
+            date: i.createdAt,
+            link: dmrl,
+            assetHash: ah, 
+            valid:i.isValid,
+            transfer: t,
+            revoke: r,
+            share: s, 
+          }] )
+        }
+      })
       num = num + 1
     })
   }

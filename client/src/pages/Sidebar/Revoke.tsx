@@ -40,6 +40,7 @@ import axios, { AxiosResponse } from 'axios';
 import Layout from './Layout'
 import { AppState } from '../../store/configureStore'
 import { connect, useSelector } from 'react-redux';
+import {encrypt, decrypt} from "../../components/rsa/utils";
 
 
 declare var window: any;
@@ -170,25 +171,35 @@ const RevokePage = () => {
             var credentialId = selectedDoc;
             const retrievedString :any = localStorage.getItem('user') || '';
             const user = JSON.parse(retrievedString);
+
+            const pks :any = localStorage.getItem('privateKey' + user.user.username) ? localStorage.getItem('privateKey' + user.user.username) : "";
+            const privateKey = (pks === "") ? {} : JSON.parse(pks);
     
             const r : AxiosResponse<any> = await axios.get(baseUrl+'getCredential?credentialId='+credentialId)
             let fileName = "";
             let assetHash = "";
             let metadataUrl = "";
 
-            r.data.credential.viewers.forEach((item:any)=>{
+            r.data.credential.viewers.forEach( async (item:any)=>{
+              
               if (item.id == user.user.id){
+                console.log(item.data)
                 fileName = item.data.fileName;
-                assetHash = item.data.assetHash;
-                metadataUrl = item.data.metadataUrl;
+                assetHash = await decrypt(item.data.assetHash, privateKey);
+                metadataUrl = await decrypt(item.data.metadataUrl, privateKey);
               }
             })
+            
+            
+            const re : AxiosResponse<any> = await axios.get(baseUrl+'getUserById?userId='+receiverAddress)
+            const publicKey = JSON.parse(re.data.user.publicKey);
+            
             const viewer = {
               id: receiverAddress, 
               data:{
                   fileName:fileName,
-                  assetHash:assetHash,
-                  metadataUrl:metadataUrl
+                  assetHash: await encrypt(assetHash, publicKey),
+                  metadataUrl: await encrypt(metadataUrl, publicKey)
                 },
               permissions: {
                 transfer: true,

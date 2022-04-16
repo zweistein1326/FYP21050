@@ -10,15 +10,18 @@ export async function encrypt(text, publicKey) {
       ).then((encrypted) => {
           encryptedText = encrypted;
   })
-  return encryptedText;
+  return JSON.stringify(encryptedText);
 }
 
 
 export async function decrypt(encrypted, key) {
+  console.log("INSIDE DECRYPT")
+  // console
   let decryptedText = ''
+  console.log("utils decrypt")
+  console.log(JSON.parse(encrypted))
   await rsa.decrypt(
-    encrypted,
-    // JSON.parse(key),
+    Buffer.from(JSON.parse(encrypted)),
     key,
     'SHA-256',
   ).then((decrypted) => {

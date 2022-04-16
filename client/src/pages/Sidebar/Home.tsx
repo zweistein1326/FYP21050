@@ -97,7 +97,11 @@ const Account = () => {
       });
 
       const resp : AxiosResponse<any> = await axios.get(baseUrl+'getUserById?userId='+i.currentOwner);
+      console.log("REQ");
+      console.log(baseUrl+'getUserById?userId='+i.currentOwner)
       console.log(privateKey)
+      console.log("RESP")
+      console.log(resp.data)
       for(let item=0; item<i.viewers.length; item++){
         let dmrl:any, ah:any;
         try{

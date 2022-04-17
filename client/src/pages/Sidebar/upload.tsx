@@ -31,6 +31,7 @@ import { AppState } from '../../store/configureStore'
 import { connect, useSelector } from 'react-redux';
 import {create} from 'ipfs-http-client';
 import {encrypt, decrypt} from '../../components/rsa/utils';
+import {DialogBox} from "../../components/DialogBox"
 
 
 
@@ -57,6 +58,11 @@ const UploadPage = () => {
   const [selectedDoc, setSelectedDoc] = useState<Boolean>(false)
   const [filePlaceholder, setFilePlaceholder] = useState<any>('Upload File')
   const [url, setUrlArr] = useState<any>('')
+  const [errUpload, setErrUpload] = useState<Boolean>(false)
+  const [errTransfer, setErrTransfer] = useState<Boolean>(false)
+
+
+
   // const [credentialId, setDataUpload] = useState<any>('')
   const [credentialId, setCredentialId] = useState<any>('')
   const baseUrl = 'http://127.0.0.1:8000/'
@@ -96,6 +102,30 @@ const UploadPage = () => {
     connectWalletHandler();
     getCredentials()
   },[state])
+
+//   const DialogBox =(title: any, data: any)=>{
+//     return(
+//         <Dialog
+//         open={open}
+//         onClose={handleClickClose}
+//         aria-labelledby="alert-dialog-title"
+//         aria-describedby="alert-dialog-description"
+//       >
+//         <DialogTitle id="alert-dialog-title">
+//           {title}
+//         </DialogTitle>
+//         <DialogContent>
+//           <DialogContentText id="alert-dialog-description">
+//             {data}
+//           </DialogContentText>
+//         </DialogContent>
+//         <DialogActions>
+//           <Button onClick={handleClickClose}>Okay</Button>
+//         </DialogActions>
+//       </Dialog>
+//     )
+    
+// }
 
   const getCredentials = async () =>{
     
@@ -220,10 +250,18 @@ const UploadPage = () => {
               }
               })
         } catch(err) {
+          setErrTransfer(true)
           console.error(err)
         } 
   }
 
+  const handleErrorCloseUpload=(f:boolean):void=>{
+    setErrUpload(f)
+  }
+
+  const handleErrorCloseTransfer=(f:boolean):void=>{
+    setErrTransfer(f)
+  }
 
   const handleSubmitFile = async (event:any) => {
     event.preventDefault();
@@ -273,8 +311,11 @@ const UploadPage = () => {
             }
         
         } catch(err) {
+          setErrUpload(true)
           console.error(err)
         }
+    }else{
+      setErrUpload(true)
     }
   } 
 
@@ -317,7 +358,9 @@ const UploadPage = () => {
           <Button onClick={handleClickCloseTransfer}>Okay</Button>
         </DialogActions>
       </Dialog>
-    
+      {errUpload && <DialogBox title='Upload Failed' data='Please re-enter your credentials.' error={handleErrorCloseUpload} />}
+      {errTransfer && <DialogBox title='Transfer Failed' data='Please re-enter your credentials.' error={handleErrorCloseTransfer} />}
+
     <Container component="main" sx={{width:'80%'}} >
       <Box
         sx={{
@@ -327,37 +370,35 @@ const UploadPage = () => {
           alignItems: 'center',
         }}
       >
-      <Typography variant='h5' display="block" gutterBottom>Upload</Typography>
+      <Typography variant='h4' style={{color:'#fff'}} display="block" gutterBottom>Upload</Typography>
       <Grid container>
       <Grid item xs={12}>
         <Box component="form" noValidate sx={{ mt: 1, marginBottom:3 }}>
-                    <Card sx={{width: '100%'}}>
-                        <Typography variant='h6' display="block" gutterBottom>
+                    <Card sx={{width: '100%'}} >                        
+                        <Typography variant='h5' display="block" style={{background:'#dadada'}} gutterBottom>
                             Account Details
                         </Typography>
-                        <CardContent>
+                        <CardContent >
                             Address: {defaultAccount}
                         </CardContent>
                     <Typography variant="button" display="block" gutterBottom>Balance: {userBalance}</Typography>
-                    </Card>
-                
-          
+                    </Card>          
         </Box>
         </Grid>    
                 <Grid container spacing={2}>
                 {/* <Grid item xs={2}></Grid> */}
-                <Grid item xs = {12}>
-                <Card sx={{width: '100%'}} >
+                <Grid item xs = {6}>
+                <Card sx={{width: '100%', height:'100%'}}  >
                     <Box component="form" onSubmit={handleSubmitFile} noValidate sx={{ mt: 1, marginBottom:3  }}>
                     <Grid container spacing={1}>
-                        <Grid item xs={12}>
-                          <br></br>
-                        <Typography variant='h6' display="block" gutterBottom color="text.secondary" style={{ fontWeight: 600 }}>
+                        <Grid item xs={12} style={{background:'#dadada'}}>                          
+                          <Typography variant='h5' display="block" style={{background:'#dadada'}} gutterBottom>
                         File Upload
                         </Typography>
                         </Grid>
                         </Grid>
-                        <Grid container spacing={3}>
+                        <br></br>
+                        <Grid container spacing={1}>
                         <Box sx={{ width: '100%', typography: 'body1' }}>                         
 
                         <Grid item xs={12}>
@@ -377,22 +418,32 @@ const UploadPage = () => {
                         </Box>                    
                     </Grid>
                     </Box>
-                    <hr></hr>
-                    <Typography variant='h6' display="block" gutterBottom color="text.secondary" style={{ fontWeight: 600 }}>
+                    </Card>
+                    </Grid>
+                    
+                    <Grid item xs = {6}>
+                    <Card sx={{width: '100%', height:'100%'}}  >
+                    <Box component="form" onSubmit={handleSubmitTransfer} noValidate sx={{ mt: 1, marginBottom:3  }}>
+
+                    <Grid container spacing={1}>
+                        <Grid item xs={12} style={{background:'#dadada'}}>                          
+                          <Typography variant='h5' display="block" style={{background:'#dadada'}} gutterBottom>
                         Transfer
                     </Typography>
+                    </Grid>
+                      
+                      </Grid>
                     
-                    <Box component="form" onSubmit={handleSubmitTransfer} noValidate sx={{ mt: 1  }}>
                     <Grid container spacing={2} >                      
                       <br></br>                        
                       </Grid>
                       <br></br>
                     <Grid container spacing={2}>
-                        <Grid item xs={6}>
+                        <Grid item xs={12}>
                             <Typography>Enter address of receiver</Typography>
                         </Grid>
-                        <Grid item xs={6}>
-                        <TextField size="small" id="outlined-basic" label="Address" variant="outlined" style={{width:'70%'}} value={receiverAddress} onChange={(e)=>setReceiverAddress(e.target.value)} />      
+                        <Grid item xs={12}>
+                        <TextField size="small" id="outlined-basic" label="Address" variant="outlined" style={{width:'80%'}} value={receiverAddress} onChange={(e)=>setReceiverAddress(e.target.value)} />      
                         </Grid>
                         <Grid item xs ={12}>
                         <Button type='submit' variant="contained">Transfer</Button>

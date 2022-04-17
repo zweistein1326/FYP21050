@@ -19,6 +19,8 @@ import { useNavigate } from 'react-router-dom';
 import { LOGIN } from '../graphql';
 import {connect, useDispatch, useSelector} from 'react-redux';
 import { login } from '../actions/auth';
+import {DialogBox} from '../components/DialogBox'
+
 import axios, { AxiosResponse } from 'axios';
 
 declare var window: any;
@@ -32,6 +34,11 @@ const Login = (props:any) => {
   const [submitLogin, { loading, error }] = useMutation(LOGIN);
   const [username, setUsername] = useState<any>('');
   const [address, setAddress] = useState<string>('');
+  const [err, setErr] = useState<Boolean>(false)
+
+  const handleErrorClose=(f:boolean):void=>{
+    setErr(f)
+  }
   
   const connectWalletHandler = async () => {
     try{
@@ -80,7 +87,7 @@ const Login = (props:any) => {
         console.log('checker')
         navigate('/home',{state: {username, address}})
       }else{
-        <Alert severity="error">Invalid Login.</Alert>
+        setErr(true)
       }
 
     }
@@ -155,6 +162,7 @@ const Login = (props:any) => {
             </Grid>
           </Grid>
         </Box>
+        {err && <DialogBox title='Login Failed' data='Please re-enter your credentials.' error={handleErrorClose} />}
       </Box>
     </Container>
   );

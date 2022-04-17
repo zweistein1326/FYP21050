@@ -175,17 +175,17 @@ const Account = () => {
     <Layout>
     <Container component="main" sx={{width: '100%'}}>        
         <Box sx={{ width: '100%', maxWidth: 1500, marginTop: '10px' }} >
-        <Typography variant="h4" component="div" gutterBottom>
+        <Typography style={{color:'#fff'}} variant="h4" component="div" gutterBottom>
             Welcome {name}
         </Typography>
         <Grid>
         <Card sx={{width: '100%'}}>
 
-            <Grid item>
+            <Grid item xs={2}>
                 <br></br>
-        <Typography variant="h5">Uploaded Files</Typography>    
-        <br></br>
-        </Grid>
+            <Typography variant="h5">Uploaded Files</Typography>    
+            <br></br>
+           </Grid>
         <Grid alignItems="center">
         <div style={{ height: 400, width: '100%', marginLeft:'0px', background:"white" }}>
             <DataGrid

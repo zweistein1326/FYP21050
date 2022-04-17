@@ -11,7 +11,7 @@ const useStyles = makeStyles(() => ({
     display: "flex",
     flexDirection: "column",
     minHeight: "100vh",
-    background: "#dbd7d2",
+    background: "#2a2a2a",
     padding: 'none',
     width: '100%',
   },

@@ -41,6 +41,7 @@ import Layout from './Layout'
 import { AppState } from '../../store/configureStore'
 import { connect, useSelector } from 'react-redux';
 import {encrypt, decrypt} from "../../components/rsa/utils";
+import {DialogBox} from "../../components/DialogBox"
 
 
 declare var window: any;
@@ -70,6 +71,22 @@ const RevokePage = () => {
   const [revokeCredentials, setRevokeCredentials] = useState<any[]>([])
   const [shareCredentials, setShareCredentials] = useState<any[]>([])
   const [transferCredentials, setTransferCredentials] = useState<any[]>([])
+  const [errTransfer, setErrTransfer] = useState<Boolean>(false)
+  const [errRevoke, setErrRevoke] = useState<Boolean>(false)
+  const [errDisclose, setErrDisclose] = useState<Boolean>(false)
+
+  
+  const handleErrorCloseTransfer=(f:boolean):void=>{
+    setErrTransfer(f)
+  }
+
+  const handleErrorCloseRevoke=(f:boolean):void=>{
+    setErrRevoke(f)
+  }
+  
+  const handleErrorCloseDisclosure=(f:boolean):void=>{
+    setErrDisclose(f)
+  }
 
   const baseUrl = 'http://127.0.0.1:8000/'
 
@@ -250,12 +267,15 @@ const RevokePage = () => {
                   if(res.data.success){
                     console.log('checker')
                     handleClickOpenTransfer()
+                  }else{
+                    setErrTransfer(true)
                   }
                   return;
                 }
                 })
           } 
           catch(err) {
+            setErrTransfer(true)
             console.error(err)
           } 
 }
@@ -286,6 +306,8 @@ const RevokePage = () => {
       setRevokeCredentials([])
       getCredentials()
 
+    }else{
+      setErrRevoke(true)
     }
   }
 
@@ -371,10 +393,14 @@ const RevokePage = () => {
           setCheckCredentials([])
           setCredentials([])
           getCredentials()
+          
+        }else{
+          setErrDisclose(true)
         }
       }
       })
     } catch(err) {
+      setErrDisclose(true)
       console.log(err)
     }
     // var credentialId = selectedDocShare
@@ -426,6 +452,11 @@ const RevokePage = () => {
   
   return (
     <Layout>
+      {errRevoke && <DialogBox title='Revocation Failed' data='Please re-enter your credentials.' error={handleErrorCloseRevoke} />}
+      {errTransfer && <DialogBox title='Transfer Failed' data='Please re-enter your credentials.' error={handleErrorCloseTransfer} />}
+      {errDisclose && <DialogBox title='Selective Disclosure Failed' data='Please re-enter your credentials.' error={handleErrorCloseDisclosure} />}
+
+
       <Dialog
         open={open}
         onClose={handleClickClose}
@@ -451,7 +482,7 @@ const RevokePage = () => {
         aria-describedby="alert-dialog-description"
       >
         <DialogTitle id="alert-dialog-title">
-          {"Revocation Completed"}
+          {"Selective Disclosure Completed"}
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
@@ -481,7 +512,7 @@ const RevokePage = () => {
         </DialogActions>
       </Dialog>
       <br></br>
-      <Typography variant='h5' display="block" gutterBottom>Manage</Typography>
+      <Typography style={{color: "#fff"}} variant='h4' display="block" gutterBottom>Manage</Typography>
       
       
     <Container component="main" >
@@ -504,6 +535,7 @@ const RevokePage = () => {
         </Box>
         <TabPanel value="1">
         <Typography variant='h5' display="block" gutterBottom>Revocation</Typography>
+        <br></br>
 <Box component="form" onSubmit={handleRevocation} noValidate sx={{ mt: 1  }}>
 <Grid container spacing={2} >
     <Grid item xs={4}>

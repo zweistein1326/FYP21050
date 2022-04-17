@@ -24,6 +24,7 @@ import axios, { AxiosResponse } from 'axios';
 import { privateEncrypt } from 'crypto';
 import { useCookies } from 'react-cookie';
 import {encrypt, decrypt} from '../components/rsa/utils';
+import {DialogBox} from '../components/DialogBox'
 import rsa from 'js-crypto-rsa';
 const Web3 = require('web3');
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:3000"));
@@ -42,6 +43,8 @@ const Login = (props:any) => {
   const [address, setAddress] = useState<string>('')
   const [cookies, setCookies] = useCookies<any>(['user'])
   const [connectedAddress, setConnectedAddress] = useState<any>('')
+  const [open, setOpen] = useState<Boolean>(false)
+  const [err, setErr] = useState<Boolean>(false)
   
   const tempAccount = async () =>{
     console.log('check')
@@ -65,6 +68,16 @@ const Login = (props:any) => {
     connectWalletHandler();
     tempAccount();
   },[])
+
+  // handleClickOpen=()=>{
+  //   setOpen(true)
+  // }
+
+  const handleErrorClose=(f:boolean):void=>{
+    console.log('check close')
+    setErr(f)
+  }
+
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -100,6 +113,9 @@ const Login = (props:any) => {
         localStorage.setItem('publicKey'+username, JSON.stringify(publicKey));
         localStorage.setItem('privateKey'+username, JSON.stringify(privateKey));
         navigate('/home', {state: payload}) 
+      }else{
+        console.log('err',err)
+        setErr(true)
       }
     });    
   };
@@ -161,6 +177,17 @@ const Login = (props:any) => {
           </Button>
           <Typography >The address for the connected Metamask Wallet is <i>{connectedAddress}</i></Typography>
         </Box>
+        <Grid container>            
+            <Grid item>
+              <Grid item>
+                <Link href="/login" variant="body2">
+                {"Have an account? Sign In"}
+                </Link>
+              </Grid>
+            </Grid>
+          </Grid>
+        {/* {err && <DialogBox title='Registration Failed' data='Please re-enter your credentials.' error={handleErrorClose} />} */}
+        {err === true? <DialogBox title='Registration Failed' data='Please re-enter your credentials.' error={handleErrorClose} />: <>{console.log('check err',err)}</>}
       </Box>
     </Container>
   );

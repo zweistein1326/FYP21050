@@ -4,6 +4,8 @@ import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
 import  MenuIcon  from "@material-ui/icons/Menu";
 import {AppBar, Toolbar, IconButton, Typography, Button} from "@material-ui/core";
 import { useNavigate } from "react-router-dom";
+import {Grid} from '@mui/material';
+
 
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -19,7 +21,8 @@ const useStyles = makeStyles((theme: Theme) => ({
     align: "center",
     color: "#e34234",
     fontFamily: "Consolas",
-    fontSize: "200%"
+    fontSize: "200%",
+    marginLeft: '650px'
   },
 }));
 
@@ -37,19 +40,23 @@ const Header = () => {
   return (
     <AppBar className={classes.appBar}>
       <Toolbar>
-        <IconButton
-          color="inherit"
-          onClick={() => toggleIsOpened(!isOpened)}
-          className={classes.icon}
-        >
-          {isOpened ? <ChevronLeftIcon /> : <MenuIcon />}
-        </IconButton>
-        <Typography variant="h6" className={classes.title} align="center" >
+      <IconButton
+            color="inherit"
+            onClick={() => toggleIsOpened(!isOpened)}
+            className={classes.icon}
+          >
+            {isOpened ? <ChevronLeftIcon /> : <MenuIcon />}
+      </IconButton>
+      
+        
+          <Typography variant="h6" className={classes.title} align="center" >
           <b>ALGOL.</b> 
         </Typography>
-        <Button variant="contained" color="secondary" onClick={handleLogout}>
-          Logout
-        </Button>
+        
+            <Button style={{background:"#a50000"}} variant="contained" color="secondary" onClick={handleLogout}>
+            Logout
+          </Button>
+          
       </Toolbar>
     </AppBar>
   );

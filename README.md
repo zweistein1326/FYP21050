@@ -1,24 +1,31 @@
 # FYP21050
 
-To run this program
+## Instructions to run the decentralized application
 
-1. npm install
-2. node index.js
+### Step 0: Start Ganache and install truffle-cli
 
-Product Features
+### Step 1: Run the blockchain
 
-1. Create a new digital identity
-2. Sign digital identity using admin's digital signature
-3. Allow user to upload a document
-4. Sign document with uploader's digital signatures
+1. cd ./server/blockchain
+2. npm install
+2. truffle migrate --reset
 
-Features implemented
+### Step 2: Run the server
 
-1. Create a new node
-2. Add attributes to a node
-3. Delete attribute from a node
+1. cd ./server
+2. npm install
+3. npm run dev
 
-What's next?
+### Step 3: Run admin application
 
-1. Signing attributes
-2. Adding transactions hash on the blockchain
+1. Open new terminal
+2. cd ./Admin
+3. npm install
+4. npm start
+
+### Step 3: Run user application
+
+1. Open new terminal
+2. cd ./User
+3. npm install
+4. npm start

@@ -12,25 +12,21 @@ contract OneID{
         string publicKey;
         bool isAdmin;
     }
-
     struct CredentialData{
         string fileName;
         string assetHash;
         string metadataUrl;
     }
-
     struct Viewer{
         uint id;
         CredentialData data;
         Permissions permissions;
     }
-
     struct Permissions{
         bool transfer;
         bool revoke;
         bool share;
     }
-
     struct Credential{
         uint id;
         uint256 createdBy;
@@ -38,32 +34,25 @@ contract OneID{
         bool isValid;
         string revocationReason;
         string createdAt;
-        // uint256[] viewers;
         Viewer[] viewers;
     }
-
     using Counters for Counters.Counter;
     Counters.Counter private _credentialIds;
     uint public userCount = 0;
-
     mapping(uint256 => Credential) public credentials;
     mapping(uint => User) public users;
-    
 
-    // * User functions * //
-
+    // ************** User functions ************** //
     // * Register new user
     function createNewUser(string memory username, address walletAddress, string memory publicKey, bool isAdmin) public {
         userCount++;
         uint256[] memory credentialIds;
         users[userCount] = User(userCount, username, walletAddress, credentialIds, publicKey, isAdmin);
     }
-
     // * Add credential to user's credentials list 
     function addCredentialToUser(uint id, uint256 credentialId) public {
         users[id].credentialIds.push(credentialId);
     }
-
     //  * Remove credential from user's credentials list
     function removeCredentialFromUser(uint id, uint256 credentialId) public {
         uint256 i = 0;
@@ -75,12 +64,10 @@ contract OneID{
             }
         }
     }
-
     // * Fetch user by Id
     function getUserById(uint id) public view returns (User memory){
         return users[id];
     }
-
     // * Fetch user by username
     function getUserByUsername(string memory username) public view returns (User memory){
         uint i = 0;
@@ -91,10 +78,8 @@ contract OneID{
         }
         revert("Not found");
     }
-
     
-    // * Credential functions
-
+    //  **************  Credential functions  ************** //
     // * Add credential to credential List and user Credentials
     function addCredential(uint256 createdBy, string memory createdAt, Viewer[] memory viewers) public returns (uint256){
         _credentialIds.increment();
@@ -114,12 +99,10 @@ contract OneID{
         addCredentialToUser(createdBy, newItemId);
         return newItemId;
     }
-
     // * Fetch credential by credentialId
     function getCredentialById(uint256 id) public view returns (Credential memory){
         return credentials[id];
     }
-
     // * Transfer credential from FROM to TO
     function transferCredential(uint256 id, uint256 fromId, uint256 toId, CredentialData memory data, Permissions memory permissions) public { 
         uint i = 0;
@@ -140,7 +123,6 @@ contract OneID{
             revert("User does not have correct permissions");
         }
     }
-
     // * Revoke Credential status
     function revokeCredential(uint256 id, uint256 fromId, string memory reason) public {
         uint i = 0;
@@ -160,7 +142,6 @@ contract OneID{
             revert("User does not have correct permissions");
         }
     }
-
     // * Add viewer to list of viewers
     function addViewerToCredential(uint256 id, uint256 fromId, Viewer[] memory viewers) public {
         uint i = 0;

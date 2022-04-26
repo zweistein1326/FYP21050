@@ -20,7 +20,7 @@
 
 1. Open new terminal
 2. cd ./Admin
-3. npm install
+3. yarn
 4. npm start
 
 ### Step 5: Run user application

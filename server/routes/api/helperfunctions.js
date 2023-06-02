@@ -6,6 +6,7 @@ const ipfs = ipfsClient.create({
     port: 5001,
     protocol: "https"
 });
+const { createHash } = require('crypto');
 
 const addFile = async (fileName, filePath) => {
     const file = fs.readFileSync(filePath);
@@ -40,4 +41,10 @@ async function decrypt(encrypted, key) {
       });
       return Buffer.from(decryptedText).toString()
 }
-module.exports = {encrypt, decrypt, addFile}
+
+// This works though if you really don't want to install external libs:
+function sha256hash(text) {
+    let hash = Buffer.from(createHash('sha256').update(text).digest('hex')).toString('hex');
+    return hash;
+}
+module.exports = {encrypt, decrypt, addFile, sha256hash}

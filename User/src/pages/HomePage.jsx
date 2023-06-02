@@ -12,7 +12,6 @@ import {encrypt, decrypt} from "../components/rsa/utils"
 const HomePage = ({connect, disconnect, isActive, account}) => {
 
   const [dataRows, setDataRows] = useState([])
-  const [forChild, setForChild] = useState([])
  
   const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
   if (user) {

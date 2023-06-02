@@ -3,27 +3,20 @@ import {
   Avatar,
   Button,
   Box,
-  Checkbox,
   Container,
   TextField,
-  FormControlLabel,
   Link,
   Grid,
   Typography,
-  Alert,
-  AlertTitle
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useMutation } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
 import { LOGIN } from '../graphql';
-import {connect, useSelector, useDispatch} from 'react-redux';
+import {useDispatch} from 'react-redux';
 import { login } from '../actions/auth';
-import { User } from '../models/User';
 import axios, { AxiosResponse } from 'axios';
-import { privateEncrypt } from 'crypto';
 import { useCookies } from 'react-cookie';
-import {encrypt, decrypt} from '../components/rsa/utils';
 import {DialogBox} from '../components/DialogBox'
 import rsa from 'js-crypto-rsa';
 const Web3 = require('web3');
@@ -41,9 +34,7 @@ const Login = (props:any) => {
   const [submitLogin, { loading, error }] = useMutation(LOGIN);
   const [username, setUsername] = useState<string>('');
   const [address, setAddress] = useState<string>('')
-  const [cookies, setCookies] = useCookies<any>(['user'])
   const [connectedAddress, setConnectedAddress] = useState<any>('')
-  const [open, setOpen] = useState<Boolean>(false)
   const [err, setErr] = useState<Boolean>(false)
   
   const tempAccount = async () =>{
@@ -88,9 +79,6 @@ const Login = (props:any) => {
     rsa.generateKey(2048).then( async (key:any)=>{
       const publicKey = key.publicKey;
       const privateKey = key.privateKey;
-
-      console.log('publicKey', publicKey);
-      console.log('privateKey', privateKey);
 
       const payload = {
           username: username,

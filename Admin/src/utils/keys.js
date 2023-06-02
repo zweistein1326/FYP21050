@@ -1,0 +1,2 @@
+export const privKey = 'daf3c4d4c0660ffc88505b193d78cf1920363cbccb77f1a10e4318c0b9d46dbb';
+export const pubKey = 'c0ed9031a70d47ea18b9e4c1651e1d3f3780b8445970e776784d44be70b1d24f'

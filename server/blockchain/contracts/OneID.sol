@@ -4,6 +4,8 @@ import '../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '../node_modules/@openzeppelin/contracts/utils/Counters.sol';
 
 contract OneID{
+    // User struct
+    // User ID, Username, Wallet Address, Credential IDs, Public Key, Is Admin
     struct User{
         uint id;
         string username;

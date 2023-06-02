@@ -16,6 +16,8 @@ import UploadPage from './pages/Sidebar/upload'
 import RevokePage from './pages/Sidebar/Revoke'
 import { CookiesProvider } from 'react-cookie';
 import { useCookies } from 'react-cookie';
+import Signature from './pages/Signature';
+import VerifySignature from './pages/VerifySignature';
 // import {use}
 
 
@@ -66,12 +68,13 @@ function App() {
       <Provider store={store}>
       <Router>
         <Routes>
-          <Route path="/" element={<Register />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/generate" element={<Signature />} />
+          <Route path="/verify" element={<VerifySignature />} />
+          {/* <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />}/>
           <Route path="/home" element={<DashboardPage />} />
           <Route path="/upload" element={<UploadPage />} />
-          <Route path="/revoke" element={<RevokePage />} />
+          <Route path="/revoke" element={<RevokePage />} /> */}
         </Routes>
       </Router>
       </Provider>

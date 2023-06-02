@@ -1,11 +1,13 @@
 const fs = require('fs');
 const router = require('express').Router();
-const {addFile, encrypt, decrypt} = require('./helperFunctions')
+const {addFile, encrypt, decrypt, sha256hash} = require('./helperFunctions')
 const oneID = require('../../blockchain/build/contracts/OneID.json');
+const credVerify = require('../../blockchain/build/contracts/CredVerify.json');
 const Web3 = require('web3');
 
 var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545/'));
-var oneIdDeployedContract = new web3.eth.Contract(oneID.abi, oneID.networks[5777].address);
+// var oneIdDeployedContract = new web3.eth.Contract(oneID.abi, oneID.networks[5777].address);
+var credVerifyDeployedContract = new web3.eth.Contract(credVerify.abi, credVerify.networks[5777].address);
 
 const setDefaultAccount = async () => {
     var account = await web3.eth.getAccounts();
@@ -23,13 +25,17 @@ router.get('/', async(req,res,next)=>{
 // * Register
 router.post('/register', async (req, res, next) => {
     
-    const {username, walletAddress, publicKey, isAdmin} = req.body;
+    const { address, email }   = req.body;
     try{
-        const tx = await oneIdDeployedContract.methods.createNewUser(username, walletAddress, publicKey, isAdmin).send({from: walletAddress, gas:4000000});
-        console.log('GAS REGISTER', tx.gasUsed)
-        const user = await oneIdDeployedContract.methods.getUserByUsername(username).call({from: web3.eth.defaultAccount, gas:4000000});
-        const returnUser = {id:user.id, username:user.username, publicKey:user.publicKey, credentialIds:user.credentialIds, publicKey: user.publicKey, isAdmin: user.isAdmin}
-        return res.status(200).json({user: returnUser, success: true})
+        const user = await credVerifyDeployedContract.methods.getUserByAddress(address, email).call({from: web3.eth.defaultAccount, gas:4000000});
+        if(user){
+            const returnUser = {address: address, credentialIds:user.credentialIds}
+            return res.status(200).json({user: returnUser, success: true})
+        } else { 
+            const tx = await credVerifyDeployedContract.methods.createNewUser(address).send({from: address, gas:4000000});
+            const returnUser = {address: address, credentialIds: []}
+            return res.status(200).json({user: returnUser, success: true})
+        }
     }
     catch(e){
         return res.status(200).json({message:e.message, success:false})
@@ -38,11 +44,13 @@ router.post('/register', async (req, res, next) => {
 
 // * Login
 router.post('/login', async (req, res, next) => {
-    const {username, walletAddress} = req.body;
+    const { address } = req.body;
+    // check if the user has correct credentials to login
+    // if yes, return user details else retrn error
     try{
-        const user = await oneIdDeployedContract.methods.getUserByUsername(username).call({from: web3.eth.defaultAccount, gas:400000});
-        if(user.walletAddress.toLowerCase() == walletAddress.toLowerCase()){
-            const returnUser = {id:user.id, username:user.username, publicKey:user.publicKey, credentialIds:user.credentialIds, publicKey: user.publicKey, isAdmin: user.isAdmin}
+        const user = await credVerifyDeployedContract.methods.getUserByAddress(address).call({from: web3.eth.defaultAccount, gas:400000});
+        if(user){
+            const returnUser = {address: address, credentialIds:user.credentialIds};
             return res.status(200).json({user: returnUser, success:true});
         }
         return res.status(200).json({message:'Login Failed',success:false});
@@ -52,11 +60,11 @@ router.post('/login', async (req, res, next) => {
     }
 })
 
-router.get('/getUserById', async (req, res, next)=>{
-    const userId = req.query.userId;
+router.get('/user', async (req, res, next)=>{
+    const { address } = req.query;
     try{
-        const user = await oneIdDeployedContract.methods.getUserById(userId).call({from:web3.eth.defaultAccount, gas:400000});
-        const returnUser = {id:user.id, username:user.username, publicKey:user.publicKey, credentialIds:user.credentialIds, publicKey: user.publicKey, isAdmin: user.isAdmin}
+        const user = await credVerifyDeployedContract.methods.getUserByAddress(address).call({from:web3.eth.defaultAccount, gas:400000});
+        const returnUser = { address: address, credentialIds:user.credentialIds }
         return res.status(200).json({user: returnUser, success:true})
     }
     catch(e){
@@ -64,61 +72,46 @@ router.get('/getUserById', async (req, res, next)=>{
     }
 })
 
-// * Get credentials by User
-router.get('/getFilesByUser',async(req,res,next)=>{
-    let userCredentials = [];
-    const userId = req.query.userId;
-    try{
-        const user = await oneIdDeployedContract.methods.getUserById(userId).call({from:web3.eth.defaultAccount, gas:400000});
+router.post('/credential', async (req, res, next)=>{
+    const { address, data } = req.body;
+    try {
+        let credential_hash = sha256hash(data + Date.now().toString());
+        const tx = await credVerifyDeployedContract.methods.addCredential(credential_hash, address, Date.now().toString(), data, []).send({from: web3.eth.defaultAccount, gas:4000000});
+        const [owners, viewers, created_at, _data, issuedBy] = await credVerifyDeployedContract.methods.addCredential(credential_hash, address, Date.now().toString(), data, []).call({from: web3.eth.defaultAccount, gas:4000000});
+        return res.status(200).json({credential: {id: credential_hash, owners, data: _data, created_at, viewers, issuedBy} ,success:true})
+    } catch (e) {
+        console.log(e);
+    }
+})
 
-        if(user.credentialIds.length>0){
-            user.credentialIds.forEach(async(credentialId,index)=>{
-                const credential = await oneIdDeployedContract.methods.getCredentialById(credentialId).call({from:web3.eth.defaultAccount, gas:400000});
-                const newCredential = {id:credential.id, createdBy:credential.createdBy, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers.map((viewer)=>({id:viewer.id, data:{fileName:viewer.data.fileName, assetHash:viewer.data.assetHash, metadataUrl: viewer.data.metadataUrl}, permissions:{transfer: viewer.permissions.transfer, share:viewer.permissions.share, revoke: viewer.permissions.revoke}}))}
-                userCredentials.push(newCredential);
-                if(index == user.credentialIds.length-1)
-                {
-                    // console.log(userCredentials);
-                    return res.status(200).json({credentials:userCredentials,success:true})
-                }
+// * Get credentials by User
+router.get('/credentials',async(req,res,next)=>{
+    const { address } = req.query; 
+    try{
+        const user = await credVerifyDeployedContract.methods.getUserByAddress(address).call({from:web3.eth.defaultAccount, gas:400000});
+        let credentials = [];
+        if(user) {
+            let credential_headers = user.credentialIds.map( async (cred_id) => {
+                // GET CREDENTIAL HEADERS BY CREDENTIAL ID
+                const [owners, viewers, created_at, data, issuedBy] = await credVerifyDeployedContract.methods.getCredentialById(cred_id).call({from: web3.eth.defaultAccount, gas:400000});
+                return {id: cred_id, owners, data, created_at, viewers, issuedBy};
             })
+            credentials = await Promise.all(credential_headers);
         }
-        else{
-            return res.status(200).json({credentials:userCredentials, success:true})
-        }
+        // GET CREDENTIAL HEADERS 
+        return res.status(200).json({address: address, credentials: credentials ?? [], success:true})
     }
     catch(e){
         return res.json({message:e.message, success:false})
     }
 })
 
-// * Upload Document
-router.post('/upload', async (req, res, next) => {
-    const { senderAddress, walletAddress, viewers } = req.body;
-    // viewers = [{id:string, data:{fileName:string, assetHash:string, metadataUrl:string}, permissions:{revoke:boolean, share:boolean, transfer: boolean}}]
-    // console.log(req.body);
-    try{
-        const tx = await oneIdDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), viewers).send({from: walletAddress, gas:5000000}); // Add credential to list of all credentials
-        console.log('GAS CREATE NEW CREDENTIAL', tx.gasUsed)
-        const credentialId = await oneIdDeployedContract.methods.addCredential(senderAddress, Date.now().toString(), viewers).call({from: web3.eth.defaultAccount, gas:5000000}) - 1 ; // Add credential to list of all credentials
-        const credential =  await oneIdDeployedContract.methods.getCredentialById(credentialId).call({from: web3.eth.defaultAccount, gas:4000000}); // Add credential to list of all credentials
-        const newCredential = {id:credential.id, createdBy:credential.createdBy, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers.map((viewer)=>({id:viewer.id, data:{fileName:viewer.data.fileName, assetHash:viewer.data.assetHash, metadataUrl: viewer.data.metadataUrl}, permissions:{transfer: viewer.permissions.transfer, share:viewer.permissions.share, revoke: viewer.permissions.revoke}}))}
-        return res.json({credential:newCredential, success:true});
-    }
-    catch(e){
-        return res.json({message:e.message, success: false});
-    }
-    
-})
-
 // * Fetch Credential By Id
-router.get('/getCredential', async(req, res, next)=> {
-    const {credentialId} = req.query;
+router.get('/credential', async(req, res, next)=> {
+    const {id} = req.query;
     try{
-        const credential = await oneIdDeployedContract.methods.getCredentialById(credentialId).call({from: web3.eth.defaultAccount, gas:400000});
-        const newCredential = {id:credential.id, createdBy:credential.createdBy, currentOwner:credential.currentOwner, isValid:credential.isValid, revocationReason:credential.revocationReason, createdAt:credential.createdAt, viewers:credential.viewers.map((viewer)=>(
-            {id:viewer.id, data:{fileName:viewer.data.fileName, assetHash:viewer.data.assetHash, metadataUrl: viewer.data.metadataUrl}, permissions:{transfer: viewer.permissions.transfer, share:viewer.permissions.share, revoke: viewer.permissions.revoke}}))}
-        return res.status(200).json({credential: newCredential, success:true})
+        const [owners, viewers, created_at, data, issuedBy] = await credVerifyDeployedContract.methods.getCredentialById(id).call({from: web3.eth.defaultAccount, gas:400000});
+        return res.status(200).json({credential: {id: id, owners, data, created_at, viewers, issuedBy} ,success:true})
     }
     catch(e){
         return res.status(200).json({message:e.message, success:false})
